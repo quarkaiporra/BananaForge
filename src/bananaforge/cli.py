@@ -169,7 +169,6 @@ def convert(
         click.echo("Loading and preprocessing image...")
 
         # Calculate resolution based on physical size and nozzle diameter
-        nozzle_diameter = 0.4  # Default nozzle diameter
         target_stl_resolution = int(round(physical_size * 2 / nozzle_diameter))
         
         # Apply processing reduction factor to avoid memory issues
@@ -181,10 +180,10 @@ def convert(
         else:
             processing_reduction_factor = 2  # Half resolution for normal targets
             
-        computed_output_size = target_stl_resolution // processing_reduction_factor
+        computed_processing_size = target_stl_resolution // processing_reduction_factor
         
         click.echo(f"Target STL resolution: {target_stl_resolution} pixels")
-        click.echo(f"Processing resolution: {computed_output_size} pixels (reduced by factor of {processing_reduction_factor})")
+        click.echo(f"Processing resolution: {computed_processing_size} pixels (reduced by factor of {processing_reduction_factor})")
 
         # Use image resizing that maintains aspect ratio
         # First load the image to get its dimensions
@@ -193,38 +192,53 @@ def convert(
         pil_img = PILImage.open(input_image)
         orig_w, orig_h = pil_img.size
 
-        # Scaling: scale based on larger dimension
+        # Calculate scaling for FULL target resolution (for heightmap initialization)
         if orig_w >= orig_h:
-            scale = computed_output_size / orig_w
+            target_scale = target_stl_resolution / orig_w
         else:
-            scale = computed_output_size / orig_h
+            target_scale = target_stl_resolution / orig_h
 
-        # Compute new dimensions maintaining aspect ratio
-        new_w = int(round(orig_w * scale))
-        new_h = int(round(orig_h * scale))
+        # Compute target dimensions maintaining aspect ratio
+        target_w = int(round(orig_w * target_scale))
+        target_h = int(round(orig_h * target_scale))
 
-        click.echo(f"Scaling: {orig_w}x{orig_h} -> {new_w}x{new_h}")
-        # Note: target_size is (height, width) for ImageProcessor, which converts correctly to PIL (width, height)
-        image = image_processor.load_image(
+        # Calculate scaling for processing resolution (for optimization)
+        if orig_w >= orig_h:
+            processing_scale = computed_processing_size / orig_w
+        else:
+            processing_scale = computed_processing_size / orig_h
+
+        # Compute processing dimensions maintaining aspect ratio
+        processing_w = int(round(orig_w * processing_scale))
+        processing_h = int(round(orig_h * processing_scale))
+
+        click.echo(f"Original image: {orig_w}x{orig_h}")
+        click.echo(f"Target resolution: {target_w}x{target_h} (for heightmap initialization)")
+        click.echo(f"Processing resolution: {processing_w}x{processing_h} (for optimization)")
+
+        # Load image at TARGET resolution for heightmap initialization
+        target_image = image_processor.load_image(
             input_image,
-            target_size=(new_h, new_w), 
+            target_size=(target_h, target_w), 
             maintain_aspect=False,  # Already calculated exact size
         )
-        # Skip preprocess_for_optimization to preserve aspect ratio from load_image
-        processed_image = image  # Use the loaded image directly
+
+        # Load image at PROCESSING resolution for optimization
+        processing_image = image_processor.load_image(
+            input_image,
+            target_size=(processing_h, processing_w), 
+            maintain_aspect=False,  # Already calculated exact size
+        )
         
         # Debug: Print tensor dimensions to verify they match expected dimensions
-        click.echo(f"Loaded image tensor shape: {processed_image.shape}")
-        click.echo(f"Expected dimensions: height={new_h}, width={new_w}")
+        click.echo(f"Target image tensor shape: {target_image.shape}")
+        click.echo(f"Processing image tensor shape: {processing_image.shape}")
 
-        # Update resolution for downstream components
-        resolution = computed_output_size
-
-        # Match materials to image colors
+        # Match materials to image colors (use processing image for efficiency)
         click.echo("Matching materials to image colors...")
         color_matcher = ColorMatcher(material_db, device)
         selected_materials, selected_colors, color_mapping = (
-            color_matcher.optimize_material_selection(processed_image, max_materials)
+            color_matcher.optimize_material_selection(processing_image, max_materials)
         )
 
         if not selected_materials:
@@ -232,7 +246,7 @@ def convert(
 
         logger.info(f"Selected {len(selected_materials)} materials")
 
-        # Initialize Height Map Generator
+        # Initialize Height Map Generator at TARGET resolution
         click.echo("Initializing height map generator...")
         cfg = Config(
             max_layers=max_layers,
@@ -245,21 +259,39 @@ def convert(
         
         heightmap_generator = HeightMapGenerator(cfg, device)
 
-        # Convert image tensor to numpy array for heightmap generation
-        image_np = processed_image.squeeze(0).permute(1, 2, 0).cpu().numpy()
-        image_np = (image_np * 255).astype(np.uint8)
+        # Convert TARGET image tensor to numpy array for heightmap generation
+        target_image_np = target_image.squeeze(0).permute(1, 2, 0).cpu().numpy()
+        target_image_np = (target_image_np * 255).astype(np.uint8)
 
         background_tuple = hex_to_rgb(cfg.background_color)
         material_colors_np = selected_colors.cpu().numpy()
 
-        initial_height_logits_np, initial_global_logits_np, _ = heightmap_generator.generate(
-            image_np, background_tuple, material_colors_np
+        # Generate heightmap at FULL TARGET resolution
+        click.echo("Generating heightmap at target resolution...")
+        target_height_logits_np, target_global_logits_np, target_labels_np = heightmap_generator.generate(
+            target_image_np, background_tuple, material_colors_np
         )
 
-        initial_height_logits = torch.from_numpy(initial_height_logits_np)
-        initial_global_logits = torch.from_numpy(initial_global_logits_np)
+        # Convert to tensors
+        target_height_logits = torch.from_numpy(target_height_logits_np)
+        target_global_logits = torch.from_numpy(target_global_logits_np)
 
-        # Setup optimization
+        # Downscale heightmap to processing resolution using nearest neighbor (like AutoForge)
+        click.echo("Downscaling heightmap for optimization...")
+        processing_height_logits_np = cv2.resize(
+            src=target_height_logits_np,
+            interpolation=cv2.INTER_NEAREST,
+            dsize=(processing_w, processing_h),
+        )
+        processing_labels_np = cv2.resize(
+            src=target_labels_np,
+            interpolation=cv2.INTER_NEAREST,
+            dsize=(processing_w, processing_h),
+        )
+
+        processing_height_logits = torch.from_numpy(processing_height_logits_np)
+
+        # Setup optimization at PROCESSING resolution
         click.echo("Setting up optimization...")
         config = OptimizationConfig(
             iterations=iterations,
@@ -273,12 +305,12 @@ def convert(
         )
 
         optimizer = LayerOptimizer(
-            image_size=(new_h, new_w),  # Use exact computed dimensions, not square
+            image_size=(processing_h, processing_w),  # Use processing dimensions
             num_materials=len(selected_materials),
             config=config,
-            target_image=processed_image,
-            initial_height_logits=initial_height_logits,
-            initial_global_logits=initial_global_logits,
+            target_image=processing_image,  # Use processing image for optimization
+            initial_height_logits=processing_height_logits,  # Use downscaled heightmap
+            initial_global_logits=target_global_logits,  # Use original global logits
         )
 
         # Progress callback
@@ -296,21 +328,40 @@ def convert(
                 progress_callback(step, loss_dict, pred_image, height_map)
 
             loss_history = optimizer.optimize(
-                target_image=processed_image,
+                target_image=processing_image,  # Use processing image
                 material_colors=selected_colors,
                 callback=progress_wrapper,
             )
 
-        # Get final results
-        final_image, final_height_map, final_material_assignments = (
+        # Get optimized results at processing resolution
+        final_image, final_height_map_processing, final_material_assignments_processing = (
             optimizer.get_final_results(selected_colors)
         )
+
+        # RESTORE FULL RESOLUTION for STL generation (like AutoForge)
+        click.echo("Restoring full resolution for STL generation...")
+        
+        # Use the original target heightmap but apply the optimized global logits
+        # This mimics AutoForge's approach: optimizer.pixel_height_logits = torch.from_numpy(pixel_height_logits_init)
+        final_height_map_full = target_height_logits.unsqueeze(0).unsqueeze(0)  # Add batch and channel dims
+        
+        # Apply the optimized global material assignments at full resolution
+        # For now, we'll upscale the material assignments using nearest neighbor
+        # Convert to float for interpolation, then back to original dtype
+        final_material_assignments_full = torch.nn.functional.interpolate(
+            final_material_assignments_processing.float().unsqueeze(0),  # Add batch dim and convert to float
+            size=(target_h, target_w),
+            mode='nearest'
+        ).squeeze(0).to(final_material_assignments_processing.dtype)  # Remove batch dim and restore dtype
+
+        click.echo(f"Final heightmap resolution: {final_height_map_full.shape}")
+        click.echo(f"Final material assignments resolution: {final_material_assignments_full.shape}")
 
         # Create output directory
         output_path = Path(output)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        # Export results
+        # Export results using FULL RESOLUTION
         click.echo("Exporting results...")
         exporter = ModelExporter(
             layer_height=layer_height,
@@ -319,8 +370,8 @@ def convert(
         )
 
         generated_files = exporter.export_complete_model(
-            height_map=final_height_map,
-            material_assignments=final_material_assignments,
+            height_map=final_height_map_full,  # Use full resolution heightmap
+            material_assignments=final_material_assignments_full,  # Use full resolution assignments
             material_database=material_db,
             material_ids=selected_materials,
             output_dir=output_path,
@@ -354,12 +405,12 @@ def convert(
 
             vis = Visualizer()
             vis.display_image_comparison(
-                processed_image.squeeze(0).permute(1, 2, 0).cpu(),
+                processing_image.squeeze(0).permute(1, 2, 0).cpu(),
                 final_image.squeeze(0).permute(1, 2, 0).cpu(),
                 save_path=output_path / f"{project_name}_comparison.png",
             )
             vis.display_height_map(
-                final_height_map.squeeze().cpu().numpy(),
+                final_height_map_processing.squeeze().cpu().numpy(),
                 save_path=output_path / f"{project_name}_heightmap.png",
             )
 
