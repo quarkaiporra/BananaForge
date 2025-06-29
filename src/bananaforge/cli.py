@@ -20,7 +20,6 @@ from .output.exporter import ModelExporter
 from .utils.config import Config, ConfigManager
 from .utils.logging import setup_logging
 from .utils.color import hex_to_rgb
-from .utils.visualization import plot_optimization_results
 import rich.console
 import rich.traceback
 from rich.console import Console
