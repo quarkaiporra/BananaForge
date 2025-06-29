@@ -279,18 +279,28 @@ def prune_ordering(ordering, labs, bg, fg, min_length=3, improvement_factor=1.5)
     return current_order
 
 
-def create_mapping(final_ordering, labs, all_labels):
+def create_mapping(final_ordering, labs, all_labels, max_layers=None):
     """
     Creates a mapping from the final_ordering to a range of values,
     and returns the final height map based on this mapping.
     Also creates initial global_logits based on the ordering.
     """
-    # Create the mapping from cluster index to a value in [0, 1]
-    num_layers = len(final_ordering)
-    value_map = {
-        cluster_idx: i / (num_layers - 1) if num_layers > 1 else 0.5
-        for i, cluster_idx in enumerate(final_ordering)
-    }
+    # Create the mapping from cluster index to a value in [0, max_layers-1]
+    num_clusters = len(final_ordering)
+    
+    # If max_layers is specified, scale the mapping to respect it
+    if max_layers is not None and max_layers > 0:
+        # Scale cluster indices to [0, max_layers-1] range
+        value_map = {
+            cluster_idx: (i * (max_layers - 1)) / (num_clusters - 1) if num_clusters > 1 else max_layers / 2
+            for i, cluster_idx in enumerate(final_ordering)
+        }
+    else:
+        # Original behavior: scale to [0, 1]
+        value_map = {
+            cluster_idx: i / (num_clusters - 1) if num_clusters > 1 else 0.5
+            for i, cluster_idx in enumerate(final_ordering)
+        }
 
     # Apply this mapping to the label image
     H, W = all_labels.shape
@@ -301,15 +311,20 @@ def create_mapping(final_ordering, labs, all_labels):
     # Scale the height map to the full range for sigmoid activation
     # Inverse of sigmoid: log(p / (1 - p))
     eps = 1e-7
+    # Ensure values are properly bounded to avoid invalid log operations
+    final_height_map = np.clip(final_height_map, eps, 1.0 - eps)
     final_height_map_logits = np.log(
-        (final_height_map + eps) / (1 - final_height_map + eps)
+        final_height_map / (1 - final_height_map)
     ).astype(np.float32)
 
     # --- Initialize global_logits ---
     # For now, we'll create a simple cycling pattern for material assignments
     # This will be overridden by the material color mapping in run_init_threads
     # We need to return a placeholder that will be replaced
-    global_logits = np.zeros((num_layers, 1), dtype=np.float32)  # Placeholder shape
+    if max_layers is not None:
+        global_logits = np.zeros((max_layers, 1), dtype=np.float32)  # Use max_layers
+    else:
+        global_logits = np.zeros((num_clusters, 1), dtype=np.float32)  # Use num_clusters
 
     return final_height_map_logits, global_logits
 
@@ -458,7 +473,7 @@ def init_height_map(
 
     # Map the cluster indices to a linear range of values (0 to N-1)
     # This value will then be scaled to the full sigmoid range.
-    final_height_map, global_logits = create_mapping(final_ordering, labs, all_labels)
+    final_height_map, global_logits = create_mapping(final_ordering, labs, all_labels, max_layers=max_layers)
 
     ordering_metric = compute_ordering_metric(final_ordering, labs)
 
@@ -485,6 +500,11 @@ def run_init_threads(
     which measures the total length of the TSP path through the color clusters.
     A shorter path is generally better.
     """
+
+    # If cluster_layers is not specified, use max_layers
+    if cluster_layers is None or cluster_layers <= 0:
+        cluster_layers = max_layers
+
     print("Choosing best ordering with metric:", end=" ")
     seeds = [random_seed + i for i in range(num_threads)]
     results = Parallel(n_jobs=os.cpu_count())(
@@ -529,7 +549,8 @@ def run_init_threads(
 
     if material_colors is not None:
         # Create material assignment logits based on the layer ordering
-        num_layers, _ = global_logits.shape
+        # Use max_layers instead of the shape from global_logits to ensure consistency
+        num_layers = max_layers if max_layers is not None else global_logits.shape[0]
         num_materials = len(material_colors)
         
         # Create a cycling pattern for material assignments
@@ -544,7 +565,8 @@ def run_init_threads(
         global_logits = material_assignment_logits
     else:
         # If no material colors provided, create a simple cycling pattern
-        num_layers, _ = global_logits.shape
+        # Use max_layers instead of the shape from global_logits to ensure consistency
+        num_layers = max_layers if max_layers is not None else global_logits.shape[0]
         # Default to 4 materials if none specified
         num_materials = 4
         material_assignment_logits = np.zeros((num_layers, num_materials), dtype=np.float32)

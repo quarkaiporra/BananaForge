@@ -252,7 +252,7 @@ def convert(
             max_layers=max_layers,
             layer_height=layer_height,
             num_init_rounds=num_init_rounds,
-            num_init_cluster_layers=num_init_cluster_layers if num_init_cluster_layers != -1 else max_layers // 2,
+            num_init_cluster_layers=num_init_cluster_layers if num_init_cluster_layers != -1 else max_layers,
             random_seed=ctx.obj['config'].get('random_seed', 0) if isinstance(ctx.obj['config'], dict) else getattr(ctx.obj['config'], 'random_seed', 0),
             background_color=ctx.obj['config'].get('background_color', '#000000') if isinstance(ctx.obj['config'], dict) else getattr(ctx.obj['config'], 'background_color', '#000000')
         )
