@@ -1,10 +1,10 @@
 # Configuration Guide
 
-Learn how to configure ForgeBambu for your specific needs and workflows.
+Learn how to configure BananaForge for your specific needs and workflows.
 
 ## Configuration Methods
 
-ForgeBambu supports multiple ways to configure settings:
+BananaForge supports multiple ways to configure settings:
 
 1. **Configuration Files** - JSON/YAML files with persistent settings
 2. **Command Line Arguments** - Override settings per command  
@@ -17,11 +17,11 @@ ForgeBambu supports multiple ways to configure settings:
 
 ```bash
 # Create default configuration
-forgebambu init-config --output my_config.json
+bananaforge init-config --output my_config.json
 
 # Edit the file with your preferred settings
 # Then use it:
-forgebambu convert image.jpg --config my_config.json
+bananaforge convert image.jpg --config my_config.json
 ```
 
 ### Configuration File Structure
@@ -51,7 +51,7 @@ forgebambu convert image.jpg --config my_config.json
   },
   "export": {
     "default_formats": ["stl", "instructions", "cost_report"],
-    "project_name": "forgebambu_model",
+    "project_name": "bananaforge_model",
     "generate_preview": false
   },
   "loss_weights": {
@@ -181,7 +181,7 @@ What files to generate:
       "instructions",  // Material swap instructions  
       "cost_report"    // Cost and usage analysis
     ],
-    "project_name": "forgebambu_model",
+    "project_name": "bananaforge_model",
     "generate_preview": false
   }
 }
@@ -219,7 +219,7 @@ Fine-tune the optimization objectives:
 
 ## Predefined Profiles
 
-ForgeBambu includes several built-in profiles:
+BananaForge includes several built-in profiles:
 
 ### Available Profiles
 
@@ -316,36 +316,36 @@ Set system-wide defaults with environment variables:
 
 | Variable | Description | Example |
 |----------|-------------|---------|
-| `FORGEBAMBU_DEVICE` | Default computation device | `cuda` |
-| `FORGEBAMBU_ITERATIONS` | Default iterations | `1500` |
-| `FORGEBAMBU_LEARNING_RATE` | Default learning rate | `0.015` |
-| `FORGEBAMBU_MAX_MATERIALS` | Default max materials | `6` |
-| `FORGEBAMBU_PHYSICAL_SIZE` | Default physical size | `120` |
-| `FORGEBAMBU_LAYER_HEIGHT` | Default layer height | `0.15` |
-| `FORGEBAMBU_OUTPUT_DIR` | Default output directory | `./my_outputs` |
+| `BANANAFORGE_DEVICE` | Default computation device | `cuda` |
+| `BANANAFORGE_ITERATIONS` | Default iterations | `1500` |
+| `BANANAFORGE_LEARNING_RATE` | Default learning rate | `0.015` |
+| `BANANAFORGE_MAX_MATERIALS` | Default max materials | `6` |
+| `BANANAFORGE_PHYSICAL_SIZE` | Default physical size | `120` |
+| `BANANAFORGE_LAYER_HEIGHT` | Default layer height | `0.15` |
+| `BANANAFORGE_OUTPUT_DIR` | Default output directory | `./my_outputs` |
 
 ### Setting Environment Variables
 
 **Linux/macOS:**
 ```bash
-export FORGEBAMBU_DEVICE=cuda
-export FORGEBAMBU_ITERATIONS=1500
-export FORGEBAMBU_MAX_MATERIALS=6
+export BANANAFORGE_DEVICE=cuda
+export BANANAFORGE_ITERATIONS=1500
+export BANANAFORGE_MAX_MATERIALS=6
 ```
 
 **Windows:**
 ```cmd
-set FORGEBAMBU_DEVICE=cuda
-set FORGEBAMBU_ITERATIONS=1500
+set BANANAFORGE_DEVICE=cuda
+set BANANAFORGE_ITERATIONS=1500
 ```
 
 **Permanent Settings:**
 Add to your shell profile (`.bashrc`, `.zshrc`, etc.):
 ```bash
-# ForgeBambu defaults
-export FORGEBAMBU_DEVICE=cuda
-export FORGEBAMBU_ITERATIONS=1500
-export FORGEBAMBU_OUTPUT_DIR=~/3d_models/forgebambu
+# BananaForge defaults
+export BANANAFORGE_DEVICE=cuda
+export BANANAFORGE_ITERATIONS=1500
+export BANANAFORGE_OUTPUT_DIR=~/3d_models/bananaforge
 ```
 
 ## Configuration Priority
@@ -360,11 +360,11 @@ Settings are applied in this order (later overrides earlier):
 Example:
 ```bash
 # Environment variable
-export FORGEBAMBU_ITERATIONS=1000
+export BANANAFORGE_ITERATIONS=1000
 
 # Config file sets iterations to 1500
 # Command line overrides to 2000
-forgebambu convert image.jpg --config my_config.json --iterations 2000
+bananaforge convert image.jpg --config my_config.json --iterations 2000
 # Final value: 2000 iterations
 ```
 
@@ -559,11 +559,11 @@ forgebambu convert image.jpg --config my_config.json --iterations 2000
 
 ### Configuration Validation
 
-ForgeBambu automatically validates your configuration:
+BananaForge automatically validates your configuration:
 
 ```bash
 # This will show validation errors if any
-forgebambu convert image.jpg --config invalid_config.json
+bananaforge convert image.jpg --config invalid_config.json
 ```
 
 Common validation errors:
@@ -576,7 +576,7 @@ Common validation errors:
 Enable verbose logging to see which settings are being used:
 
 ```bash
-forgebambu --verbose convert image.jpg --config my_config.json
+bananaforge --verbose convert image.jpg --config my_config.json
 ```
 
 This shows:
@@ -614,8 +614,8 @@ my_configs/
 Use descriptive config files for different scenarios:
 
 ```bash
-forgebambu convert portrait.jpg --config configs/portraits.json
-forgebambu convert landscape.jpg --config configs/landscapes.json
+bananaforge convert portrait.jpg --config configs/portraits.json
+bananaforge convert landscape.jpg --config configs/landscapes.json
 ```
 
 ---

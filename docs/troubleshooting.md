@@ -1,27 +1,27 @@
 # Troubleshooting Guide
 
-Common issues and solutions for ForgeBambu.
+Common issues and solutions for BananaForge.
 
 ## Installation Issues
 
-### "Command not found: forgebambu"
+### "Command not found: bananaforge"
 
-**Problem**: Terminal doesn't recognize `forgebambu` command
+**Problem**: Terminal doesn't recognize `bananaforge` command
 
 **Solutions**:
 ```bash
 # Check if installed correctly
-pip show forgebambu
+pip show bananaforge
 
 # Check if pip install directory is in PATH
-python -m pip show forgebambu
+python -m pip show bananaforge
 
 # Try running directly
-python -m forgebambu --help
+python -m bananaforge --help
 
 # Reinstall if needed
-pip uninstall forgebambu
-pip install forgebambu
+pip uninstall bananaforge
+pip install bananaforge
 ```
 
 **For virtual environments**:
@@ -32,12 +32,12 @@ source venv/bin/activate  # Linux/Mac
 venv\Scripts\activate     # Windows
 
 # Then install
-pip install forgebambu
+pip install bananaforge
 ```
 
-### "No module named 'forgebambu'"
+### "No module named 'bananaforge'"
 
-**Problem**: Python can't find the ForgeBambu module
+**Problem**: Python can't find the BananaForge module
 
 **Solutions**:
 ```bash
@@ -45,13 +45,13 @@ pip install forgebambu
 python --version  # Should be 3.9+
 
 # Check if installed in correct environment
-pip list | grep forgebambu
+pip list | grep bananaforge
 
 # Check Python path
 python -c "import sys; print(sys.path)"
 
 # Reinstall with verbose output
-pip install -v forgebambu
+pip install -v bananaforge
 ```
 
 ### CUDA/GPU Installation Issues
@@ -84,15 +84,15 @@ python -c "import torch; print(f'MPS available: {torch.backends.mps.is_available
 pip install --upgrade pip
 
 # Install with all dependencies
-pip install forgebambu --upgrade
+pip install bananaforge --upgrade
 
 # For development dependencies
-pip install forgebambu[dev]
+pip install bananaforge[dev]
 
 # Clean install
-pip uninstall forgebambu
+pip uninstall bananaforge
 pip cache purge
-pip install forgebambu
+pip install bananaforge
 ```
 
 ---
@@ -107,17 +107,17 @@ pip install forgebambu
 
 1. **Reduce processing resolution**:
 ```bash
-forgebambu convert image.jpg --resolution 128
+bananaforge convert image.jpg --resolution 128
 ```
 
 2. **Use CPU instead of GPU**:
 ```bash
-forgebambu convert image.jpg --device cpu
+bananaforge convert image.jpg --device cpu
 ```
 
 3. **Reduce model complexity**:
 ```bash
-forgebambu convert image.jpg \
+bananaforge convert image.jpg \
   --max-materials 4 \
   --max-layers 25 \
   --iterations 500
@@ -150,13 +150,13 @@ htop   # If installed
 ls -la image.jpg
 
 # Use absolute path
-forgebambu convert /full/path/to/image.jpg
+bananaforge convert /full/path/to/image.jpg
 
 # Check file permissions
 chmod 644 image.jpg
 
 # For material files
-forgebambu convert image.jpg --materials /full/path/to/materials.csv
+bananaforge convert image.jpg --materials /full/path/to/materials.csv
 ```
 
 ### "Invalid image format" Errors
@@ -175,7 +175,7 @@ img.convert('RGB').save('input.jpg')
 "
 
 # Supported formats: JPG, PNG, BMP, TIFF
-forgebambu convert input.jpg
+bananaforge convert input.jpg
 ```
 
 ---
@@ -190,12 +190,12 @@ forgebambu convert input.jpg
 
 1. **Use GPU acceleration**:
 ```bash
-forgebambu convert image.jpg --device cuda  # or mps
+bananaforge convert image.jpg --device cuda  # or mps
 ```
 
 2. **Reduce quality settings**:
 ```bash
-forgebambu convert image.jpg \
+bananaforge convert image.jpg \
   --iterations 500 \
   --resolution 128 \
   --max-materials 4
@@ -203,14 +203,14 @@ forgebambu convert image.jpg \
 
 3. **Use fast profile**:
 ```bash
-forgebambu init-config --output fast_config.json
+bananaforge init-config --output fast_config.json
 # Edit config to use "fast" profile
-forgebambu convert image.jpg --config fast_config.json
+bananaforge convert image.jpg --config fast_config.json
 ```
 
 4. **Enable early stopping**:
 ```bash
-forgebambu convert image.jpg \
+bananaforge convert image.jpg \
   --iterations 2000 \
   # Early stopping is enabled by default (patience=100)
 ```
@@ -223,14 +223,14 @@ forgebambu convert image.jpg \
 
 1. **Reduce image resolution**:
 ```bash
-forgebambu convert image.jpg --resolution 128
+bananaforge convert image.jpg --resolution 128
 ```
 
 2. **Process smaller batches**:
 ```bash
 # Instead of processing many images at once
 for img in *.jpg; do
-    forgebambu convert "$img"
+    bananaforge convert "$img"
 done
 ```
 
@@ -256,25 +256,25 @@ if torch.cuda.is_available():
 
 1. **Increase iterations**:
 ```bash
-forgebambu convert image.jpg --iterations 2000
+bananaforge convert image.jpg --iterations 2000
 ```
 
 2. **Adjust learning rate**:
 ```bash
-forgebambu convert image.jpg --learning-rate 0.005  # Lower for stability
+bananaforge convert image.jpg --learning-rate 0.005  # Lower for stability
 ```
 
 3. **Check material selection**:
 ```bash
 # Analyze colors first
-forgebambu analyze-colors image.jpg --max-materials 8
+bananaforge analyze-colors image.jpg --max-materials 8
 # Ensure good material matches
 ```
 
 4. **Use different initialization**:
 ```python
 # In Python API
-from forgebambu.core.optimizer import HeightMapInitializer
+from bananaforge.core.optimizer import HeightMapInitializer
 initializer = HeightMapInitializer()
 init_height = initializer.depth_based_init(image, max_layers)
 ```
@@ -291,24 +291,24 @@ init_height = initializer.depth_based_init(image, max_layers)
 
 1. **Try different matching methods**:
 ```bash
-forgebambu analyze-colors image.jpg --method lab
-forgebambu analyze-colors image.jpg --method perceptual
+bananaforge analyze-colors image.jpg --method lab
+bananaforge analyze-colors image.jpg --method perceptual
 ```
 
 2. **Increase material count**:
 ```bash
-forgebambu convert image.jpg --max-materials 10
+bananaforge convert image.jpg --max-materials 10
 ```
 
 3. **Check material database**:
 ```bash
 # Ensure diverse color coverage
-forgebambu export-materials --color-diversity --max-materials 12
+bananaforge export-materials --color-diversity --max-materials 12
 ```
 
 4. **Enhance image preprocessing**:
 ```python
-from forgebambu.image.processor import ImageProcessor
+from bananaforge.image.processor import ImageProcessor
 processor = ImageProcessor()
 enhanced = processor.enhance_contrast(image, factor=1.2)
 ```
@@ -331,7 +331,7 @@ enhanced = processor.enhance_contrast(image, factor=1.2)
 
 2. **Use mesh smoothing**:
 ```python
-from forgebambu.output.stl_generator import STLGenerator
+from bananaforge.output.stl_generator import STLGenerator
 generator = STLGenerator()
 mesh = generator.generate_stl(
     height_map, "output.stl", 
@@ -341,7 +341,7 @@ mesh = generator.generate_stl(
 
 3. **Reduce layer height**:
 ```bash
-forgebambu convert image.jpg --layer-height 0.15  # Instead of 0.2
+bananaforge convert image.jpg --layer-height 0.15  # Instead of 0.2
 ```
 
 ### Too Many Material Swaps
@@ -352,7 +352,7 @@ forgebambu convert image.jpg --layer-height 0.15  # Instead of 0.2
 
 1. **Reduce material count**:
 ```bash
-forgebambu convert image.jpg --max-materials 4
+bananaforge convert image.jpg --max-materials 4
 ```
 
 2. **Increase consistency weight**:
@@ -366,7 +366,7 @@ forgebambu convert image.jpg --max-materials 4
 
 3. **Optimize swap sequence**:
 ```python
-from forgebambu.output.instructions import SwapInstructionGenerator
+from bananaforge.output.instructions import SwapInstructionGenerator
 generator = SwapInstructionGenerator()
 optimized_instructions = generator.optimize_swap_sequence(
     instructions, material_db, minimize_swaps=True
@@ -385,12 +385,12 @@ optimized_instructions = generator.optimize_swap_sequence(
 
 1. **Validate STL file**:
 ```bash
-forgebambu validate-stl model.stl
+bananaforge validate-stl model.stl
 ```
 
 2. **Repair mesh issues**:
 ```python
-from forgebambu.output.mesh import MeshProcessor
+from bananaforge.output.mesh import MeshProcessor
 processor = MeshProcessor()
 repaired_mesh = processor.repair_mesh(mesh)
 ```
@@ -410,8 +410,8 @@ print(f"Issues: {quality['issues']}")
 1. **Check slicer compatibility**:
 ```bash
 # Generate slicer-specific files
-forgebambu convert image.jpg --export-format bambu  # For Bambu Studio
-forgebambu convert image.jpg --export-format prusa  # For PrusaSlicer
+bananaforge convert image.jpg --export-format bambu  # For Bambu Studio
+bananaforge convert image.jpg --export-format prusa  # For PrusaSlicer
 ```
 
 2. **Verify file format**:
@@ -446,7 +446,7 @@ mat1,Red PLA,Brand,#FF0000
 
 3. **Validate material data**:
 ```python
-from forgebambu.materials.database import Material
+from bananaforge.materials.database import Material
 try:
     material = Material(
         id="test", name="Test", brand="Test",
@@ -466,12 +466,12 @@ except Exception as e:
 1. **Expand material database**:
 ```bash
 # Add more diverse colors
-forgebambu export-materials --color-diversity --max-materials 20
+bananaforge export-materials --color-diversity --max-materials 20
 ```
 
 2. **Check color range**:
 ```python
-from forgebambu.materials.matcher import ColorMatcher
+from bananaforge.materials.matcher import ColorMatcher
 matcher = ColorMatcher(material_db)
 # Try wider color matching tolerance
 materials = db.get_materials_by_color_range(
@@ -496,14 +496,14 @@ python -c "import json; json.load(open('config.json'))"
 
 2. **Use default config as template**:
 ```bash
-forgebambu init-config --output template.json
+bananaforge init-config --output template.json
 # Copy and modify template.json
 ```
 
 3. **Check config priority**:
 ```bash
 # Command line overrides config file
-forgebambu convert image.jpg --config my_config.json --iterations 2000
+bananaforge convert image.jpg --config my_config.json --iterations 2000
 ```
 
 ### Environment Variable Issues
@@ -515,16 +515,16 @@ forgebambu convert image.jpg --config my_config.json --iterations 2000
 1. **Check variable names**:
 ```bash
 # Correct variable names
-export FORGEBAMBU_DEVICE=cuda
-export FORGEBAMBU_ITERATIONS=1500
+export BANANAFORGE_DEVICE=cuda
+export BANANAFORGE_ITERATIONS=1500
 
 # Check if set
-echo $FORGEBAMBU_DEVICE
+echo $BANANAFORGE_DEVICE
 ```
 
 2. **Verify variable loading**:
 ```bash
-forgebambu --verbose convert image.jpg  # Shows which settings are used
+bananaforge --verbose convert image.jpg  # Shows which settings are used
 ```
 
 ---
@@ -540,14 +540,14 @@ forgebambu --verbose convert image.jpg  # Shows which settings are used
 1. **Path separators**:
 ```cmd
 REM Use forward slashes or double backslashes
-forgebambu convert image.jpg --output "./output"
-forgebambu convert image.jpg --output ".\\output"
+bananaforge convert image.jpg --output "./output"
+bananaforge convert image.jpg --output ".\\output"
 ```
 
 2. **Long path names**:
 ```cmd
 REM Enable long paths in Windows or use shorter paths
-forgebambu convert image.jpg --project-name "short_name"
+bananaforge convert image.jpg --project-name "short_name"
 ```
 
 3. **Antivirus interference**:
@@ -565,11 +565,11 @@ REM Or run in Windows Defender excluded folder
 1. **Permission issues**:
 ```bash
 # Fix pip permissions
-pip install --user forgebambu
+pip install --user bananaforge
 
 # Or use homebrew Python
 brew install python
-pip3 install forgebambu
+pip3 install bananaforge
 ```
 
 2. **Apple Silicon GPU**:
@@ -578,7 +578,7 @@ pip3 install forgebambu
 python -c "import torch; print(torch.backends.mps.is_available())"
 
 # Use MPS device
-forgebambu convert image.jpg --device mps
+bananaforge convert image.jpg --device mps
 ```
 
 ### Linux Issues
@@ -605,7 +605,7 @@ sudo pacman -S python python-pip mesa
 sudo apt install xvfb
 
 # Run with virtual display
-xvfb-run -a forgebambu convert image.jpg
+xvfb-run -a bananaforge convert image.jpg
 ```
 
 ---
@@ -618,12 +618,12 @@ When reporting issues, include:
 
 ```bash
 # System information
-forgebambu version
+bananaforge version
 python --version
-pip show forgebambu
+pip show bananaforge
 
 # Verbose output
-forgebambu --verbose convert image.jpg
+bananaforge --verbose convert image.jpg
 
 # System details
 python -c "
@@ -643,22 +643,22 @@ if torch.backends.mps.is_available():
 | Error Message | Likely Cause | Solution |
 |---------------|--------------|----------|
 | "CUDA out of memory" | GPU memory exhausted | Use `--device cpu` or reduce `--resolution` |
-| "No module named" | Installation issue | Reinstall with `pip install forgebambu` |
+| "No module named" | Installation issue | Reinstall with `pip install bananaforge` |
 | "File not found" | Wrong file path | Use absolute path or check file exists |
 | "Invalid image format" | Unsupported format | Convert to JPG or PNG |
-| "Configuration error" | Invalid config values | Use `forgebambu init-config` for template |
+| "Configuration error" | Invalid config values | Use `bananaforge init-config` for template |
 | "No suitable materials" | Material database issue | Check material CSV/JSON format |
 
 ### Resources
 
 - 📖 **Documentation**: [Full Documentation](README.md)
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/forgebambu/forgebambu/issues)
-- 💬 **Community**: [GitHub Discussions](https://github.com/forgebambu/forgebambu/discussions)
-- 📧 **Support**: support@forgebambu.com
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/bananaforge/bananaforge/issues)
+- 💬 **Community**: [GitHub Discussions](https://github.com/bananaforge/bananaforge/discussions)
+- 📧 **Support**: support@bananaforge.com
 
 ### Performance Monitoring
 
-Monitor ForgeBambu performance:
+Monitor BananaForge performance:
 
 ```python
 import time

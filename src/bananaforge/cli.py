@@ -50,7 +50,12 @@ def cli(ctx, verbose: bool, quiet: bool, config):
     ctx.ensure_object(dict)
 
     # Setup logging
-    setup_logging(verbose=verbose, quiet=quiet)
+    log_level = logging.INFO
+    if quiet:
+        log_level = logging.ERROR
+    elif verbose:
+        log_level = logging.DEBUG
+    setup_logging(level=log_level)
 
     # Load configuration
     ctx.obj["config_manager"] = ConfigManager(config)
@@ -106,7 +111,7 @@ def cli(ctx, verbose: bool, quiet: bool, config):
     help="Export formats to generate",
 )
 @click.option(
-    "--project-name", default="forgebambu_model", help="Name for the generated project"
+    "--project-name", default="bananaforge_model", help="Name for the generated project"
 )
 @click.option(
     "--resolution", type=int, default=512, help="Processing resolution (pixels)"
@@ -508,7 +513,7 @@ def validate_stl(stl_file):
     "--output",
     "-o",
     type=click.Path(),
-    default="./forgebambu_config.json",
+    default="./bananaforge_config.json",
     help="Output configuration file path",
 )
 def init_config(output):

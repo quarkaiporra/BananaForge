@@ -1,10 +1,10 @@
 # Material Management
 
-Learn how to manage materials, create custom databases, and optimize color matching in ForgeBambu.
+Learn how to manage materials, create custom databases, and optimize color matching in BananaForge.
 
 ## Overview
 
-Materials are the foundation of multi-color 3D printing. ForgeBambu provides powerful tools to:
+Materials are the foundation of multi-color 3D printing. BananaForge provides powerful tools to:
 
 - **Import** material databases from CSV/JSON files
 - **Match** image colors to available materials
@@ -16,7 +16,7 @@ Materials are the foundation of multi-color 3D printing. ForgeBambu provides pow
 
 ### Material Properties
 
-Each material in ForgeBambu has these properties:
+Each material in BananaForge has these properties:
 
 | Property | Type | Description | Example |
 |----------|------|-------------|---------|
@@ -35,12 +35,12 @@ Each material in ForgeBambu has these properties:
 
 ## Built-in Material Sets
 
-ForgeBambu includes several pre-configured material databases:
+BananaForge includes several pre-configured material databases:
 
 ### Bambu Lab Basic PLA
 ```bash
 # Export default Bambu Lab set
-forgebambu export-materials --output bambu_pla.csv
+bananaforge export-materials --output bambu_pla.csv
 ```
 
 Includes 14 common colors:
@@ -51,7 +51,7 @@ Includes 14 common colors:
 ### HueForge Compatible
 ```bash
 # Export HueForge-style materials
-forgebambu export-materials --format json --output hueforge_materials.json
+bananaforge export-materials --format json --output hueforge_materials.json
 ```
 
 Generic materials compatible with HueForge workflows.
@@ -59,7 +59,7 @@ Generic materials compatible with HueForge workflows.
 ### Rainbow Test Set
 ```bash
 # Create rainbow colors for testing
-forgebambu export-materials --brand "Test" --max-materials 12 --output rainbow.csv
+bananaforge export-materials --brand "Test" --max-materials 12 --output rainbow.csv
 ```
 
 ## Creating Material Databases
@@ -142,11 +142,11 @@ If you use HueForge, export your filament library:
 # Analyze HueForge CSV format
 head -5 hueforge_export.csv
 
-# Import and reformat for ForgeBambu
+# Import and reformat for BananaForge
 python -c "
 import pandas as pd
 df = pd.read_csv('hueforge_export.csv')
-# Rename columns to match ForgeBambu format
+# Rename columns to match BananaForge format
 df_forge = df.rename(columns={
     'Filament Name': 'name',
     'Brand': 'brand', 
@@ -162,7 +162,7 @@ df_forge.to_csv('my_materials.csv', index=False)
 **Bambu Lab Materials:**
 ```bash
 # Export default Bambu set and customize
-forgebambu export-materials --brand "Bambu Lab" --output bambu_base.csv
+bananaforge export-materials --brand "Bambu Lab" --output bambu_base.csv
 
 # Edit bambu_base.csv to mark which materials you actually have
 # Set available=false for materials you don't own
@@ -194,14 +194,14 @@ glow_green,Glow in Dark Green,SUNLU,#32CD32,0.0,200,"Phosphorescent material"
 
 ## Color Matching Methods
 
-ForgeBambu offers three color matching algorithms:
+BananaForge offers three color matching algorithms:
 
 ### Perceptual Matching (Recommended)
 
 Uses LAB color space for human vision accuracy:
 
 ```bash
-forgebambu analyze-colors image.jpg --method perceptual
+bananaforge analyze-colors image.jpg --method perceptual
 ```
 
 **Best for:**
@@ -219,7 +219,7 @@ forgebambu analyze-colors image.jpg --method perceptual
 Simple RGB distance calculation:
 
 ```bash
-forgebambu analyze-colors image.jpg --method euclidean
+bananaforge analyze-colors image.jpg --method euclidean
 ```
 
 **Best for:**
@@ -237,7 +237,7 @@ forgebambu analyze-colors image.jpg --method euclidean
 Perceptual color space with optimal assignment:
 
 ```bash
-forgebambu analyze-colors image.jpg --method lab
+bananaforge analyze-colors image.jpg --method lab
 ```
 
 **Best for:**
@@ -258,7 +258,7 @@ When exporting materials, optimize for color coverage:
 
 ```bash
 # Select 8 most diverse colors from available materials
-forgebambu export-materials \
+bananaforge export-materials \
   --max-materials 8 \
   --color-diversity \
   --output diverse_set.csv
@@ -272,13 +272,13 @@ Create sets for specific printer brands:
 
 ```bash
 # Bambu Lab only
-forgebambu export-materials \
+bananaforge export-materials \
   --brand "Bambu Lab" \
   --max-materials 10 \
   --output bambu_only.csv
 
 # Multiple brands
-forgebambu export-materials \
+bananaforge export-materials \
   --brand "Bambu Lab" \
   --brand "Prusa" \
   --output multi_brand.csv
@@ -339,7 +339,7 @@ budget_white,Budget PLA White,Brand Y,#FFFFFF,19.99,1.28
 carbon_black,Carbon Fiber PLA,Premium,#1C1C1C,89.99,1.30
 ```
 
-ForgeBambu calculates:
+BananaForge calculates:
 - Material volume needed
 - Weight based on density  
 - Total cost per print
@@ -372,10 +372,10 @@ Analyze image colors before converting:
 
 ```bash
 # Basic analysis
-forgebambu analyze-colors portrait.jpg --max-materials 6
+bananaforge analyze-colors portrait.jpg --max-materials 6
 
 # Detailed analysis with output
-forgebambu analyze-colors portrait.jpg \
+bananaforge analyze-colors portrait.jpg \
   --materials my_materials.csv \
   --method perceptual \
   --output analysis.json
@@ -407,7 +407,7 @@ The analysis includes color harmony metrics:
 See how well materials match image colors:
 
 ```bash
-forgebambu analyze-colors image.jpg --materials materials.csv
+bananaforge analyze-colors image.jpg --materials materials.csv
 ```
 
 ```
@@ -431,7 +431,7 @@ cp studio_master_materials.csv current_inventory.csv
 # Edit current_inventory.csv in spreadsheet
 
 # 3. Analyze client image
-forgebambu analyze-colors client_image.jpg \
+bananaforge analyze-colors client_image.jpg \
   --materials current_inventory.csv \
   --max-materials 8 \
   --output client_analysis.json
@@ -441,7 +441,7 @@ forgebambu analyze-colors client_image.jpg \
 # project_materials.csv
 
 # 5. Convert with optimized materials
-forgebambu convert client_image.jpg \
+bananaforge convert client_image.jpg \
   --materials project_materials.csv \
   --max-materials 6 \
   --project-name "client_project_v1"
@@ -451,7 +451,7 @@ forgebambu convert client_image.jpg \
 
 ```bash
 # 1. Start with printer's default materials
-forgebambu export-materials \
+bananaforge export-materials \
   --brand "Bambu Lab" \
   --output my_filaments.csv
 
@@ -459,7 +459,7 @@ forgebambu export-materials \
 # Set available=false for colors you don't own
 
 # 3. Quick color check before buying new filaments
-forgebambu analyze-colors vacation_photo.jpg \
+bananaforge analyze-colors vacation_photo.jpg \
   --materials my_filaments.csv \
   --max-materials 6
 
@@ -467,7 +467,7 @@ forgebambu analyze-colors vacation_photo.jpg \
 # Add new materials to my_filaments.csv
 
 # 5. Convert when ready
-forgebambu convert vacation_photo.jpg \
+bananaforge convert vacation_photo.jpg \
   --materials my_filaments.csv \
   --max-materials 6
 ```
@@ -485,13 +485,13 @@ for image in photos/*.jpg; do
     basename=$(basename "$image" .jpg)
     
     # Analyze first
-    forgebambu analyze-colors "$image" \
+    bananaforge analyze-colors "$image" \
       --materials "$MATERIALS" \
       --output "${OUTPUT_BASE}/${basename}_analysis.json"
     
     # Convert if analysis looks good
     # (could add automated quality checks here)
-    forgebambu convert "$image" \
+    bananaforge convert "$image" \
       --materials "$MATERIALS" \
       --max-materials 6 \
       --project-name "$basename" \
@@ -508,16 +508,16 @@ done
 **Solutions:**
 ```bash
 # 1. Try different matching method
-forgebambu analyze-colors image.jpg --method lab
+bananaforge analyze-colors image.jpg --method lab
 
 # 2. Increase material count
-forgebambu analyze-colors image.jpg --max-materials 10
+bananaforge analyze-colors image.jpg --max-materials 10
 
 # 3. Expand material database
 # Add more diverse colors to your CSV
 
 # 4. Check color diversity
-forgebambu export-materials --color-diversity --max-materials 12
+bananaforge export-materials --color-diversity --max-materials 12
 ```
 
 ### Limited Material Selection
@@ -543,7 +543,7 @@ forgebambu export-materials --color-diversity --max-materials 12
 # Remove unavailable materials from CSV
 
 # 3. Find substitutes
-forgebambu analyze-colors image.jpg \
+bananaforge analyze-colors image.jpg \
   --materials available_only.csv \
   --max-materials 8
 ```
@@ -555,16 +555,16 @@ forgebambu analyze-colors image.jpg \
 **Solutions:**
 ```bash
 # 1. Reduce material count
-forgebambu convert image.jpg --max-materials 4
+bananaforge convert image.jpg --max-materials 4
 
 # 2. Use budget materials
 # Edit CSV to include lower-cost alternatives
 
 # 3. Optimize model size
-forgebambu convert image.jpg --physical-size 80
+bananaforge convert image.jpg --physical-size 80
 
 # 4. Increase layer height
-forgebambu convert image.jpg --layer-height 0.3
+bananaforge convert image.jpg --layer-height 0.3
 ```
 
 ## Best Practices

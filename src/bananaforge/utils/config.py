@@ -63,7 +63,7 @@ class ConfigManager:
             },
             "export": {
                 "default_formats": ["stl", "instructions", "cost_report"],
-                "project_name": "forgebambu_model",
+                "project_name": "bananaforge_model",
                 "generate_preview": False,
             },
             "loss_weights": {
@@ -224,13 +224,13 @@ class ConfigManager:
 
         # Override with environment variables
         env_mappings = {
-            "FORGEBAMBU_DEVICE": "optimization.device",
-            "FORGEBAMBU_ITERATIONS": "optimization.iterations",
-            "FORGEBAMBU_LEARNING_RATE": "optimization.learning_rate",
-            "FORGEBAMBU_MAX_MATERIALS": "materials.max_materials",
-            "FORGEBAMBU_PHYSICAL_SIZE": "model.physical_size",
-            "FORGEBAMBU_LAYER_HEIGHT": "model.layer_height",
-            "FORGEBAMBU_OUTPUT_DIR": "output.directory",
+            "BANANAFORGE_DEVICE": "optimization.device",
+            "BANANAFORGE_ITERATIONS": "optimization.iterations",
+            "BANANAFORGE_LEARNING_RATE": "optimization.learning_rate",
+            "BANANAFORGE_MAX_MATERIALS": "materials.max_materials",
+            "BANANAFORGE_PHYSICAL_SIZE": "model.physical_size",
+            "BANANAFORGE_LAYER_HEIGHT": "model.layer_height",
+            "BANANAFORGE_OUTPUT_DIR": "output.directory",
         }
 
         for env_var, config_key in env_mappings.items():

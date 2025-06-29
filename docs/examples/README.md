@@ -1,6 +1,6 @@
-# ForgeBambu Examples
+# BananaForge Examples
 
-Real-world examples and tutorials for using ForgeBambu effectively.
+Real-world examples and tutorials for using BananaForge effectively.
 
 ## Example Categories
 
@@ -36,37 +36,37 @@ Real-world examples and tutorials for using ForgeBambu effectively.
 
 ```bash
 # Basic conversion
-forgebambu convert image.jpg
+bananaforge convert image.jpg
 
 # High quality conversion
-forgebambu convert image.jpg --iterations 2000 --resolution 512
+bananaforge convert image.jpg --iterations 2000 --resolution 512
 
 # Analyze colors first
-forgebambu analyze-colors image.jpg --max-materials 8
+bananaforge analyze-colors image.jpg --max-materials 8
 
 # Export materials database
-forgebambu export-materials --output my_materials.csv
+bananaforge export-materials --output my_materials.csv
 
 # Validate STL file
-forgebambu validate-stl model.stl
+bananaforge validate-stl model.stl
 ```
 
 ### Python API Snippets
 
 ```python
 # Basic optimization
-from forgebambu import LayerOptimizer, ImageProcessor, MaterialDatabase
+from bananaforge import LayerOptimizer, ImageProcessor, MaterialDatabase
 processor = ImageProcessor()
 image = processor.load_image("photo.jpg")
 # ... optimization code ...
 
 # Material matching
-from forgebambu.materials.matcher import ColorMatcher
+from bananaforge.materials.matcher import ColorMatcher
 matcher = ColorMatcher(material_db)
 materials, colors, _ = matcher.optimize_material_selection(image, 6)
 
 # Export results
-from forgebambu.output.exporter import ModelExporter
+from bananaforge.output.exporter import ModelExporter
 exporter = ModelExporter()
 files = exporter.export_complete_model(height_map, assignments, material_db, materials, "./output")
 ```
@@ -88,7 +88,7 @@ All examples include:
 
 ## Contributing Examples
 
-Have a great ForgeBambu workflow? Share it!
+Have a great BananaForge workflow? Share it!
 
 1. Create a new markdown file
 2. Include complete code examples
@@ -99,5 +99,5 @@ Have a great ForgeBambu workflow? Share it!
 ## Support
 
 - 📖 **Documentation**: [Main Docs](../README.md)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/forgebambu/forgebambu/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/forgebambu/forgebambu/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/bananaforge/bananaforge/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/bananaforge/bananaforge/discussions)
