@@ -152,6 +152,8 @@ class LayerOptimizer(nn.Module):
         height_map = (
             torch.sigmoid(self.height_logits) * self.config.max_layers
         )  # [H, W]
+        # Clamp to max_layers to ensure we don't exceed the limit
+        height_map = torch.clamp(height_map, 0, self.config.max_layers)
 
         # Get material probabilities for each layer using Gumbel softmax
         material_probs = self.gumbel_softmax(

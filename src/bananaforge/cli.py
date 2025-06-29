@@ -272,11 +272,11 @@ def convert(
             target_image_np, background_tuple, material_colors_np
         )
 
-        # Convert to tensors
-        target_height_logits = torch.from_numpy(target_height_logits_np)
-        target_global_logits = torch.from_numpy(target_global_logits_np)
+        # Convert to tensors with correct dtype
+        target_height_logits = torch.from_numpy(target_height_logits_np).float()
+        target_global_logits = torch.from_numpy(target_global_logits_np).float()
 
-        # Downscale heightmap to processing resolution using nearest neighbor (like AutoForge)
+        # Downscale heightmap to processing resolution using nearest neighbor
         click.echo("Downscaling heightmap for optimization...")
         processing_height_logits_np = cv2.resize(
             src=target_height_logits_np,
@@ -289,7 +289,7 @@ def convert(
             dsize=(processing_w, processing_h),
         )
 
-        processing_height_logits = torch.from_numpy(processing_height_logits_np)
+        processing_height_logits = torch.from_numpy(processing_height_logits_np).float()
 
         # Setup optimization at PROCESSING resolution
         click.echo("Setting up optimization...")
@@ -338,12 +338,16 @@ def convert(
             optimizer.get_final_results(selected_colors)
         )
 
-        # RESTORE FULL RESOLUTION for STL generation (like AutoForge)
+        # RESTORE FULL RESOLUTION for STL generation
         click.echo("Restoring full resolution for STL generation...")
         
-        # Use the original target heightmap but apply the optimized global logits
-        # This mimics AutoForge's approach: optimizer.pixel_height_logits = torch.from_numpy(pixel_height_logits_init)
-        final_height_map_full = target_height_logits.unsqueeze(0).unsqueeze(0)  # Add batch and channel dims
+        # Use original full-resolution heightmap with optimized global_logits       
+        # Apply discretize solution formula directly
+        # pixel_heights = (max_layers * h) * torch.sigmoid(pixel_height_logits)
+        # discrete_height_image = torch.round(pixel_heights / h).clamp(0, max_layers)
+        pixel_heights = (max_layers * layer_height) * torch.sigmoid(target_height_logits)
+        discrete_height_image = torch.round(pixel_heights / layer_height)
+        final_height_map_full = torch.clamp(discrete_height_image, 0, max_layers).unsqueeze(0).unsqueeze(0)
         
         # Apply the optimized global material assignments at full resolution
         # For now, we'll upscale the material assignments using nearest neighbor

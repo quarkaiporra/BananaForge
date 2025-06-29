@@ -279,29 +279,54 @@ def prune_ordering(ordering, labs, bg, fg, min_length=3, improvement_factor=1.5)
     return current_order
 
 
-def create_mapping(final_ordering, labs, all_labels, max_layers=None):
+def create_mapping(final_ordering, labs, all_labels):
     """
-    Creates a mapping from the final_ordering to a range of values,
-    and returns the final height map based on this mapping.
-    Also creates initial global_logits based on the ordering.
-    """
-    # Create the mapping from cluster index to a value in [0, max_layers-1]
-    num_clusters = len(final_ordering)
-    
-    # If max_layers is specified, scale the mapping to respect it
-    if max_layers is not None and max_layers > 0:
-        # Scale cluster indices to [0, max_layers-1] range
-        value_map = {
-            cluster_idx: (i * (max_layers - 1)) / (num_clusters - 1) if num_clusters > 1 else max_layers / 2
-            for i, cluster_idx in enumerate(final_ordering)
-        }
-    else:
-        # Original behavior: scale to [0, 1]
-        value_map = {
-            cluster_idx: i / (num_clusters - 1) if num_clusters > 1 else 0.5
-            for i, cluster_idx in enumerate(final_ordering)
-        }
+    Creates a mapping from each cluster (from all_labels) to a value in [0,1].
+    Clusters in final_ordering get evenly spaced values.
+    For clusters that were pruned (i.e. not in final_ordering), assign the value
+    of the nearest cluster in final_ordering (based on Lab-space distance).
 
+    Parameters:
+      final_ordering: list of cluster indices (after pruning)
+      labs: array of Lab-space coordinates (indexed by cluster index)
+      all_labels: sorted list of all unique clusters produced by KMeans
+
+    Returns:
+      mapping: a dict mapping each cluster label in all_labels to a float in [0,1].
+    """
+    mapping = {}
+    n_order = len(final_ordering)
+    # If there's only one cluster in final_ordering, assign 0.5
+    if n_order == 1:
+        for label in all_labels:
+            mapping[label] = 0.5
+        return mapping
+
+    # Assign evenly spaced values for clusters in final_ordering.
+    for i, cluster in enumerate(final_ordering):
+        mapping[cluster] = i / (n_order - 1)
+
+    # For clusters not in final_ordering, find the nearest cluster (in Lab space)
+    # from final_ordering and use its mapping value.
+    for label in all_labels:
+        if label not in mapping:
+            lab_val = labs[label]
+            best_cluster = None
+            best_dist = float("inf")
+            for cl in final_ordering:
+                d = np.linalg.norm(labs[cl] - lab_val)
+                if d < best_dist:
+                    best_dist = d
+                    best_cluster = cl
+            mapping[label] = mapping[best_cluster]
+    return mapping
+
+
+def create_height_map_from_mapping(all_labels, value_map, max_layers=None):
+    """
+    Creates a height map from cluster labels and value mapping.
+    This replaces the height map creation part of the old create_mapping function.
+    """
     # Apply this mapping to the label image
     H, W = all_labels.shape
     final_height_map = np.zeros((H, W), dtype=np.float32)
@@ -324,7 +349,7 @@ def create_mapping(final_ordering, labs, all_labels, max_layers=None):
     if max_layers is not None:
         global_logits = np.zeros((max_layers, 1), dtype=np.float32)  # Use max_layers
     else:
-        global_logits = np.zeros((num_clusters, 1), dtype=np.float32)  # Use num_clusters
+        global_logits = np.zeros((len(value_map), 1), dtype=np.float32)  # Use num_clusters
 
     return final_height_map_logits, global_logits
 
@@ -404,7 +429,7 @@ def interpolate_arrays(value_array_pairs, num_points):
     for i in range(arrays.shape[1]):
         interpolated_arrays[:, i] = np.interp(target_values, values, arrays[:, i])
 
-    return interpolated_arrays
+    return interpolated_arrays.astype(np.float32)
 
 
 def init_height_map(
@@ -471,13 +496,18 @@ def init_height_map(
     # Prune outliers from the ordering
     final_ordering = prune_ordering(final_ordering, labs, bg_node, fg_node)
 
-    # Map the cluster indices to a linear range of values (0 to N-1)
-    # This value will then be scaled to the full sigmoid range.
-    final_height_map, global_logits = create_mapping(final_ordering, labs, all_labels, max_layers=max_layers)
+    # Get the unique clusters (should be 0...cluster_layers-1 ideally)
+    unique_clusters = sorted(np.unique(all_labels))
+    
+    # Create the proper height mapping
+    new_values = create_mapping(final_ordering, labs, unique_clusters)
+    
+    # Create height map from the mapping
+    final_height_map, global_logits = create_height_map_from_mapping(all_labels, new_values, max_layers=max_layers)
 
     ordering_metric = compute_ordering_metric(final_ordering, labs)
 
-    return final_height_map, global_logits, ordering_metric, all_labels
+    return final_height_map, global_logits, ordering_metric, all_labels, labs, final_ordering, new_values
 
 
 def run_init_threads(
@@ -506,6 +536,8 @@ def run_init_threads(
         cluster_layers = max_layers
 
     print("Choosing best ordering with metric:", end=" ")
+    if random_seed is None:
+        random_seed = 0
     seeds = [random_seed + i for i in range(num_threads)]
     results = Parallel(n_jobs=os.cpu_count())(
         delayed(init_height_map)(
@@ -530,7 +562,7 @@ def run_init_threads(
     for i, res in enumerate(results):
         if res is None:
             continue
-        _, _, metric, _ = res
+        _, _, metric, _, _, _, _ = res
         if metric < best_result_metric:
             best_result_metric = metric
             best_result_idx = i
@@ -544,29 +576,50 @@ def run_init_threads(
     print(f"{best_result_metric:.4f}")
     best_result = results[best_result_idx]
 
-    height_map, global_logits, _, labels = best_result
+    height_map, global_logits, _, labels, labs, final_ordering, new_values = best_result
     print(f"Best result number of cluster layers: {len(np.unique(labels))}")
 
     if material_colors is not None:
-        # Create material assignment logits based on the layer ordering
-        # Use max_layers instead of the shape from global_logits to ensure consistency
-        num_layers = max_layers if max_layers is not None else global_logits.shape[0]
+        # Assign materials based on cluster colors
+        num_layers = max_layers
         num_materials = len(material_colors)
         
-        # Create a cycling pattern for material assignments
-        # Each layer gets assigned to a material in a cycling pattern
-        material_assignment_logits = np.zeros((num_layers, num_materials), dtype=np.float32)
+        # Convert material colors to Lab space for better color matching
+        from skimage.color import rgb2lab
+        material_colors_lab = rgb2lab(material_colors.reshape(1, -1, 3)).reshape(-1, 3)
         
-        for i in range(num_layers):
-            # Assign each layer to a material in a cycling pattern
-            material_idx = i % num_materials
-            material_assignment_logits[i, material_idx] = 1.0
+        # Create material assignment logits based on cluster-to-material matching
+        global_logits_list = []
         
-        global_logits = material_assignment_logits
+        # Get unique cluster labels
+        unique_clusters = np.unique(labels)
+        
+        # Use the already computed height mapping from init_height_map
+        
+        for cluster_label in unique_clusters:
+            # Get the Lab color for this cluster (already computed in two_stage_weighted_kmeans)
+            cluster_lab = labs[cluster_label]
+            
+            # Find closest material in Lab space
+            distances = np.linalg.norm(material_colors_lab - cluster_lab, axis=1)
+            best_material_idx = np.argmin(distances)
+            
+            # Create one-hot assignment for this cluster
+            material_logit = np.ones(num_materials, dtype=np.float32) * -1.0
+            material_logit[best_material_idx] = 1.0
+            
+            # Use the MAPPED height value - this handles pruned clusters correctly
+            height_value = new_values[cluster_label]
+            
+            global_logits_list.append((height_value, material_logit))
+        
+        # Sort by height value and interpolate to max_layers
+        global_logits_list.sort(key=lambda x: x[0])
+        global_logits = interpolate_arrays(global_logits_list, num_layers)
     else:
         # If no material colors provided, create a simple cycling pattern
-        # Use max_layers instead of the shape from global_logits to ensure consistency
-        num_layers = max_layers if max_layers is not None else global_logits.shape[0]
+        # Always use max_layers to ensure it's respected
+        num_layers = max_layers
         # Default to 4 materials if none specified
         num_materials = 4
         material_assignment_logits = np.zeros((num_layers, num_materials), dtype=np.float32)
