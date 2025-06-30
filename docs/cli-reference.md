@@ -73,7 +73,7 @@ bananaforge convert INPUT_IMAGE [OPTIONS]
 - `--device [cpu|cuda|mps]` - Device for computation (default: cpu)
 
 #### Export Options
-- `--export-format [stl|instructions|hueforge|prusa|bambu|cost_report]` - Export formats (can specify multiple)
+- `--export-format [stl|instructions|hueforge|prusa|bambu|cost_report]` - Export formats splitted by comma (can specify multiple)
 - `--preview` - Generate preview visualization
 
 ### Examples
@@ -96,7 +96,7 @@ bananaforge convert photo.jpg \
 ```bash
 bananaforge convert photo.jpg \
   --materials bambu_pla.csv \
-  --export-format stl instructions bambu \
+  --export-format stl,instructions,bambu \
   --project-name "my_lithophane"
 ```
 
@@ -108,7 +108,7 @@ bananaforge convert photo.jpg \
   --enable-gradients \
   --device cuda \
   --mixed-precision \
-  --export-format stl instructions transparency_analysis
+  --export-format stl,instructions,transparency_analysis
 ```
 
 #### GPU Accelerated

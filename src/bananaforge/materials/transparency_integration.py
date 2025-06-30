@@ -68,20 +68,21 @@ class TransparencyIntegration:
         }
 
     def enable_transparency_mode(
-        self, existing_workflow_data: Dict, transparency_config: Dict
+        self, existing_workflow_data: Dict, transparency_config: Dict, setup_mode: bool = False
     ) -> Dict:
         """Enable transparency mode and integrate with existing workflow.
 
         Args:
             existing_workflow_data: Data from existing optimization workflow
             transparency_config: Configuration for transparency features
+            setup_mode: If True, allows missing fields for early-stage setup
 
         Returns:
             Dictionary with integration results
         """
         try:
             # Validate compatibility
-            compatibility_check = self._check_compatibility(existing_workflow_data)
+            compatibility_check = self._check_compatibility(existing_workflow_data, setup_mode=setup_mode)
 
             if not compatibility_check["compatible"]:
                 return {
@@ -122,6 +123,7 @@ class TransparencyIntegration:
                 "enhanced_workflow": enhanced_workflow,
                 "compatibility_check": compatibility_check,
                 "feature_status": self.feature_status,
+                "setup_mode": setup_mode,
             }
 
         except Exception as e:
@@ -395,14 +397,32 @@ class TransparencyIntegration:
 
     # Private helper methods
 
-    def _check_compatibility(self, workflow_data: Dict) -> Dict:
-        """Check compatibility of workflow data with transparency features."""
-        required_fields = ["image", "height_map", "material_assignments", "materials"]
+    def _check_compatibility(self, workflow_data: Dict, setup_mode: bool = False) -> Dict:
+        """Check compatibility of workflow data with transparency features.
+        
+        Args:
+            workflow_data: Workflow data to check
+            setup_mode: If True, allows missing height_map and material_assignments
+        """
+        if setup_mode:
+            # In setup mode, only require essential fields
+            required_fields = ["image", "materials"]
+            optional_fields = ["height_map", "material_assignments"]
+        else:
+            # In full mode, require all fields
+            required_fields = ["image", "height_map", "material_assignments", "materials"]
+            optional_fields = []
+        
         missing_fields = []
+        optional_missing = []
 
         for field in required_fields:
-            if field not in workflow_data:
+            if field not in workflow_data or workflow_data[field] is None:
                 missing_fields.append(field)
+        
+        for field in optional_fields:
+            if field not in workflow_data or workflow_data[field] is None:
+                optional_missing.append(field)
 
         compatible = len(missing_fields) == 0
 
@@ -410,12 +430,14 @@ class TransparencyIntegration:
         compatibility_details = {
             "material_db_compatible": self.material_db is not None,
             "color_matcher_compatible": self.color_matcher is not None,
-            "optimizer_compatible": self.layer_optimizer is not None,
+            "optimizer_compatible": setup_mode or self.layer_optimizer is not None,  # Relax in setup mode
         }
 
         return {
             "compatible": compatible and all(compatibility_details.values()),
             "missing_fields": missing_fields,
+            "optional_missing": optional_missing,
+            "setup_mode": setup_mode,
             **compatibility_details,
         }
 
