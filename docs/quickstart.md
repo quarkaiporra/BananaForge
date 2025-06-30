@@ -110,7 +110,7 @@ bananaforge convert my_image.jpg --iterations 500 --resolution 128
 bananaforge convert my_image.jpg --iterations 2000 --resolution 512
 
 # Balanced (default)
-bananaforge convert my_image.jpg --iterations 1000 --resolution 256
+bananaforge convert my_image.jpg --iterations 6000 --resolution 512
 ```
 
 ### Controlling Materials and Size
@@ -119,7 +119,8 @@ bananaforge convert my_image.jpg --iterations 1000 --resolution 256
 bananaforge convert my_image.jpg \
   --max-materials 6 \
   --physical-size 150 \
-  --layer-height 0.15 \
+  --layer-height 0.08 \
+  --initial-layer-height 0.16 \
   --project-name "my_awesome_model"
 ```
 
@@ -178,13 +179,14 @@ Preview color matching before full conversion:
 
 ```bash
 # Analyze what materials would be selected
-bananaforge analyze-colors my_image.jpg --max-materials 8
+bananaforge analyze-colors my_image.jpg --max-materials 4
 
 # Output shows:
-# Suggested materials (8):
+# Suggested materials (4):
 #   1. Basic PLA White - #FFFFFF (RGB: 1.00, 1.00, 1.00)
 #   2. Basic PLA Black - #000000 (RGB: 0.00, 0.00, 0.00)
-#   ...
+#   3. Basic PLA Red - #DC143C (RGB: 0.86, 0.08, 0.24)
+#   4. Basic PLA Blue - #4169E1 (RGB: 0.25, 0.41, 0.88)
 ```
 
 ## Common Workflows
@@ -211,13 +213,13 @@ bananaforge convert image.jpg \
   --resolution 512 \
   --max-materials 8 \
   --physical-size 200 \
-  --layer-height 0.15 \
+  --layer-height 0.08 \
   --enable-transparency \
   --optimize-base-layers \
   --enable-gradients \
   --device cuda \
   --mixed-precision \
-  --export-format stl instructions hueforge cost_report transparency_analysis
+  --export-format "stl,instructions,hueforge,cost_report,transparency_analysis"
 ```
 
 ### Workflow 3: Transparency Optimization Focus
@@ -230,13 +232,13 @@ bananaforge convert image.jpg \
   --transparency-threshold 0.35 \
   --optimize-base-layers \
   --enable-gradients \
-  --export-format stl instructions transparency_analysis cost_report
+  --export-format "stl,instructions,transparency_analysis,cost_report"
 
 # For specific printer with transparency
 bananaforge convert image.jpg \
   --materials bambu_materials.csv \
   --enable-transparency \
-  --export-format stl instructions hueforge transparency_analysis
+  --export-format "stl,instructions,hueforge,transparency_analysis"
 ```
 
 ## Configuration Profiles

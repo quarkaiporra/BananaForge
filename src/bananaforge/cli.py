@@ -719,13 +719,13 @@ def export_materials(format, output, brand, max_materials, color_diversity):
         manager.load_default_materials()  # Default for now
 
         logger.info(
-            f"Exporting materials with filters: brands={brands}, max_materials={max_materials}"
+            f"Exporting materials with filters: brands={brand}, max_materials={max_materials}"
         )
 
         manager.export_materials(
             output_path=output,
             format=format,
-            brands=brands,
+            brands=brand,
             max_materials=max_materials,
         )
 

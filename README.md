@@ -27,7 +27,7 @@ pip install -e .
 bananaforge convert photo.jpg --materials materials.csv
 
 # With transparency mixing for fewer material swaps
-bananaforge convert photo.jpg --enable-transparency --materials materials.csv
+bananaforge convert photo.jpg --enable-transparency --materials materials.csv --max-materials 6
 ```
 
 ## 🎨 Advanced Transparency Features
@@ -46,11 +46,17 @@ BananaForge introduces **transparency-based color mixing** that revolutionizes m
 - **Cost analysis** with detailed savings reports
 
 ```bash
-# Enable transparency features
+# Enable transparency features with full options
 bananaforge convert image.jpg \
   --enable-transparency \
+  --opacity-levels "0.33,0.67,1.0" \
+  --optimize-base-layers \
+  --enable-gradients \
   --materials materials.csv \
+  --max-materials 6 \
   --max-layers 25 \
+  --mixed-precision \
+  --export-format "stl,instructions,cost_report,transparency_analysis" \
   --output ./transparent_model/
 ```
 
@@ -124,4 +130,4 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 - Built with ❤️ using PyTorch and modern AI techniques
 - Inspired by the 3D printing and computer vision communities
-- Special thanks to HueForge for pioneering multi-color 3D printing workflows
+- Special thanks to HueForge and Autoforge for pioneering multi-color 3D printing workflows

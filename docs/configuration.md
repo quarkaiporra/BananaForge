@@ -20,7 +20,7 @@ BananaForge supports multiple ways to configure settings:
 # Create default configuration
 bananaforge init-config --output my_config.json
 
-# Create transparency-optimized configuration
+# Create transparency-optimized configuration (NEW in v1.0)
 bananaforge init-config --transparency-optimized --output transparency_config.json
 
 # Edit the file with your preferred settings
@@ -33,7 +33,7 @@ bananaforge convert image.jpg --config my_config.json
 ```json
 {
   "optimization": {
-    "iterations": 1000,
+    "iterations": 6000,
     "learning_rate": 0.01,
     "learning_rate_scheduler": "cosine",
     "mixed_precision": true,
@@ -42,15 +42,16 @@ bananaforge convert image.jpg --config my_config.json
     "device": "cuda"
   },
   "model": {
-    "layer_height": 0.2,
-    "base_height": 0.4,
-    "max_layers": 50,
-    "physical_size": 100.0,
-    "resolution": 256
+    "layer_height": 0.08,
+    "initial_layer_height": 0.16,
+    "max_layers": 15,
+    "physical_size": 180.0,
+    "resolution": 512,
+    "nozzle_diameter": 0.4
   },
   "materials": {
-    "max_materials": 8,
-    "color_matching_method": "lab",
+    "max_materials": 4,
+    "color_matching_method": "perceptual",
     "default_database": "bambu_pla"
   },
   "transparency": {
@@ -245,12 +246,13 @@ What files to generate:
 ```
 
 **Available Formats:**
-- `stl` - Standard 3D model file
+- `stl` - Standard 3D model file with alpha channel support
 - `instructions` - Material change instructions (TXT/CSV)
 - `hueforge` - HueForge project file (.hfp)
-- `prusa` - PrusaSlicer project file
-- `bambu` - Bambu Studio project file  
+- `prusa` - PrusaSlicer project file (3MF)
+- `bambu` - Bambu Studio project file (3MF)
 - `cost_report` - Material usage and cost analysis
+- `transparency_analysis` - 🌈 Transparency mixing analysis (NEW)
 - `preview` - 3D preview with colors
 
 ### Loss Function Weights

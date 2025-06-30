@@ -51,7 +51,7 @@ bananaforge convert INPUT_IMAGE [OPTIONS]
 
 #### Material Settings
 - `--materials PATH` - Material database file (CSV or JSON)
-- `--max-materials INT` - Maximum number of materials to use (default: 8)
+- `--max-materials INT` - Maximum number of materials to use (default: 4)
 
 #### 🌈 Transparency Features (New in v1.0)
 - `--enable-transparency` - Enable transparency-based color mixing
@@ -59,21 +59,27 @@ bananaforge convert INPUT_IMAGE [OPTIONS]
 - `--optimize-base-layers` - Optimize base layer colors for maximum contrast
 - `--enable-gradients` - Enable gradient processing for smooth transitions
 - `--transparency-threshold FLOAT` - Minimum transparency savings threshold (default: 0.3)
-- `--max-materials INT` - Maximum number of materials (default: 8)
+- `--max-materials INT` - Maximum number of materials (default: 4)
 
 #### Model Parameters
-- `--max-layers INT` - Maximum number of layers (default: 50)
-- `--layer-height FLOAT` - Layer height in mm (default: 0.2)
-- `--physical-size FLOAT` - Size of longest dimension in mm (default: 100.0)
-- `--resolution INT` - Processing resolution in pixels (default: 256)
+- `--max-layers INT` - Maximum number of layers (default: 15)
+- `--layer-height FLOAT` - Layer height in mm (default: 0.08)
+- `--initial-layer-height FLOAT` - Initial layer height in mm (default: 0.16)
+- `--nozzle-diameter FLOAT` - Nozzle diameter in mm (default: 0.4)
+- `--physical-size FLOAT` - Size of longest dimension in mm (default: 180.0)
+- `--resolution INT` - Processing resolution in pixels (default: 512)
 
 #### Optimization Settings
-- `--iterations INT` - Number of optimization iterations (default: 1000)
+- `--iterations INT` - Number of optimization iterations (default: 6000)
 - `--learning-rate FLOAT` - Learning rate for optimization (default: 0.01)
-- `--device [cpu|cuda|mps]` - Device for computation (default: cpu)
+- `--device [cpu|cuda|mps]` - Device for computation (default: cuda)
+- `--num-init-rounds INT` - Number of rounds for heightmap initialization (default: 8)
+- `--num-init-cluster-layers INT` - Number of layers to cluster the image into (default: -1)
+- `--mixed-precision` - Enable mixed precision for memory efficiency (CUDA only)
 
 #### Export Options
-- `--export-format [stl|instructions|hueforge|prusa|bambu|cost_report]` - Export formats splitted by comma (can specify multiple)
+- `--export-format LIST` - Export formats (comma-separated): `stl,instructions,hueforge,prusa,bambu,cost_report,transparency_analysis` (default: `stl,instructions,cost_report`)
+- `--project-name TEXT` - Name for the generated project (default: `bananaforge_model`)
 - `--preview` - Generate preview visualization
 
 ### Examples
@@ -135,8 +141,8 @@ bananaforge analyze-colors INPUT_IMAGE [OPTIONS]
 ### Options
 #### Basic Analysis
 - `--materials PATH` - Material database file
-- `--max-materials INT` - Maximum materials to suggest (default: 8)
-- `--method [lab|perceptual|euclidean]` - Color matching method (default: lab)
+- `--max-materials INT` - Maximum materials to suggest (default: 4)
+- `--method [perceptual|euclidean|lab]` - Color matching method (default: perceptual)
 - `--output, -o PATH` - Save analysis results to JSON file
 
 #### 🌈 Transparency Analysis (New)
@@ -299,8 +305,8 @@ bananaforge init-config [OPTIONS]
 ```
 
 ### Options
-- `--output, -o PATH` - Output file path (default: `config.json`)
-- `--template [default|quality|fast]` - Configuration template
+- `--output, -o PATH` - Output file path (default: `./bananaforge_config.json`)
+- `--transparency-optimized` - Create transparency-optimized configuration
 
 ### Examples
 
@@ -309,18 +315,11 @@ bananaforge init-config [OPTIONS]
 bananaforge init-config
 ```
 
-#### Create Quality-Focused Config
+#### Create Transparency-Optimized Config
 ```bash
 bananaforge init-config \
-  --template quality \
-  --output quality_config.json
-```
-
-#### Create Fast Config
-```bash
-bananaforge init-config \
-  --template fast \
-  --output fast_config.json
+  --transparency-optimized \
+  --output transparency_config.json
 ```
 
 ### Generated Config Example
