@@ -1,7 +1,0 @@
-<opc_ct:Types xmlns:opc_ct="http://schemas.openxmlformats.org/package/2006/content-types">
-  <opc_ct:Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
-  <opc_ct:Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>
-  <opc_ct:Default Extension="png" ContentType="image/png"/>
-  <opc_ct:Default Extension="xml" ContentType="application/xml"/>
-  <opc_ct:Override PartName="/3D/3dmodel.model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/>
-</opc_ct:Types>
