@@ -1,9 +1,9 @@
 """Utility modules for BananaForge."""
 
-from .config import ConfigManager, Config
+from .color import hex_to_rgb
+from .config import Config, ConfigManager
 from .logging import setup_logging
 from .visualization import Visualizer
-from .color import hex_to_rgb
 
 __all__ = [
     "ConfigManager",

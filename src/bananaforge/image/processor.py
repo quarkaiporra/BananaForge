@@ -1,12 +1,15 @@
 """Image processing utilities for BananaForge."""
 
+from typing import Dict, Optional, Tuple, Union
+
+import cv2
+import numpy as np
 import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from PIL import Image
-import numpy as np
-from typing import Tuple, Optional, Union
-import cv2
+
+from ..utils.color import ColorConverter
 
 
 class ImageProcessor:
@@ -19,6 +22,7 @@ class ImageProcessor:
             device: Device for tensor operations
         """
         self.device = torch.device(device)
+        self.color_converter = ColorConverter(device)
 
         # Standard transforms
         self.to_tensor = transforms.ToTensor()
@@ -59,6 +63,178 @@ class ImageProcessor:
         tensor = self.to_tensor(image).unsqueeze(0).to(self.device)
 
         return tensor
+
+    def resize_color_preserving(
+        self,
+        image: torch.Tensor,
+        target_size: Tuple[int, int],
+        preserve_edges: bool = True,
+    ) -> torch.Tensor:
+        """Resize image while preserving color details.
+
+        Uses INTER_AREA for downscaling and INTER_CUBIC for upscaling
+        to maintain color fidelity and edge sharpness.
+
+        Args:
+            image: Input image tensor (B, 3, H, W)
+            target_size: Target size (height, width)
+            preserve_edges: Whether to use edge-preserving interpolation
+
+        Returns:
+            Resized image tensor
+        """
+        current_h, current_w = image.shape[-2:]
+        target_h, target_w = target_size
+
+        # Convert to numpy for OpenCV processing
+        image_np = image.squeeze(0).permute(1, 2, 0).cpu().numpy()
+        image_np = (image_np * 255).astype(np.uint8)
+
+        # Determine if we're upscaling or downscaling
+        scale_factor = (target_h * target_w) / (current_h * current_w)
+
+        if scale_factor < 1.0:  # Downscaling
+            # Use INTER_AREA for better color preservation when shrinking
+            interpolation = cv2.INTER_AREA
+        else:  # Upscaling
+            # Use INTER_CUBIC for edge preservation when enlarging
+            interpolation = cv2.INTER_CUBIC if preserve_edges else cv2.INTER_LINEAR
+
+        # Resize using OpenCV
+        resized_np = cv2.resize(
+            image_np, (target_w, target_h), interpolation=interpolation
+        )
+
+        # Convert back to tensor
+        resized_tensor = torch.from_numpy(resized_np).float() / 255.0
+        resized_tensor = resized_tensor.permute(2, 0, 1).unsqueeze(0).to(self.device)
+
+        return resized_tensor
+
+    def enhance_saturation(
+        self,
+        image: torch.Tensor,
+        enhancement_factor: float,
+        method: str = "hsl",
+    ) -> torch.Tensor:
+        """Enhance image saturation intelligently.
+
+        Args:
+            image: Input image tensor (B, 3, H, W) in range [0, 1]
+            enhancement_factor: Enhancement factor (0.0 = no change, 1.0 = double saturation)
+            method: Enhancement method ('hsl' or 'lab')
+
+        Returns:
+            Saturation-enhanced image tensor
+        """
+        if method == "lab":
+            return self._enhance_saturation_lab(image, enhancement_factor)
+        else:
+            return self._enhance_saturation_hsl(image, enhancement_factor)
+
+    def _enhance_saturation_hsl(
+        self, image: torch.Tensor, enhancement_factor: float
+    ) -> torch.Tensor:
+        """Enhance saturation using HSL method (faster)."""
+        # Calculate luminance weights for grayscale conversion
+        weights = torch.tensor(
+            [0.2989, 0.5870, 0.1140], device=self.device, dtype=image.dtype
+        )
+
+        # Calculate grayscale version
+        if image.dim() == 4:  # Batch dimension
+            gray = (image * weights.view(1, 3, 1, 1)).sum(dim=1, keepdim=True)
+        else:  # Single image
+            gray = (image * weights.view(3, 1, 1)).sum(dim=0, keepdim=True)
+
+        gray = gray.expand_as(image)
+
+        # Enhance saturation by interpolating between grayscale and original
+        factor = 1.0 + enhancement_factor
+        enhanced = gray + factor * (image - gray)
+
+        # Clamp to valid range
+        enhanced = torch.clamp(enhanced, 0.0, 1.0)
+
+        return enhanced
+
+    def _enhance_saturation_lab(
+        self, image: torch.Tensor, enhancement_factor: float
+    ) -> torch.Tensor:
+        """Enhance saturation using LAB color space (more accurate)."""
+        # Convert to LAB (expects [0, 255] range)
+        image_255 = image * 255.0
+        lab_image = self.color_converter.rgb_to_lab(image_255)
+
+        # Enhance saturation in LAB space
+        enhanced_lab = self.color_converter.enhance_saturation_lab(
+            lab_image, enhancement_factor
+        )
+
+        # Convert back to RGB
+        enhanced_rgb = self.color_converter.lab_to_rgb(enhanced_lab)
+
+        # Normalize back to [0, 1] range
+        enhanced = enhanced_rgb / 255.0
+        enhanced = torch.clamp(enhanced, 0.0, 1.0)
+
+        return enhanced
+
+    def load_and_process_enhanced(
+        self,
+        image_path: str,
+        target_size: Tuple[int, int],
+        enable_lab_conversion: bool = True,
+        saturation_enhancement: float = 0.0,
+        use_color_preserving_resize: bool = True,
+    ) -> Dict[str, torch.Tensor]:
+        """Load and process image with all enhancements.
+
+        Complete pipeline implementation for Feature 1.
+
+        Args:
+            image_path: Path to image file
+            target_size: Target size (height, width)
+            enable_lab_conversion: Whether to provide LAB conversion
+            saturation_enhancement: Saturation enhancement factor
+            use_color_preserving_resize: Whether to use enhanced resizing
+
+        Returns:
+            Dictionary containing processed images and metadata
+        """
+        # Load original image
+        original_image = self.load_image(image_path)
+
+        # Apply saturation enhancement if requested
+        if saturation_enhancement > 0:
+            enhanced_image = self.enhance_saturation(
+                original_image, saturation_enhancement, method="lab"
+            )
+        else:
+            enhanced_image = original_image
+
+        # Resize using color-preserving method if requested
+        if use_color_preserving_resize:
+            resized_image = self.resize_color_preserving(enhanced_image, target_size)
+        else:
+            resized_image = F.interpolate(
+                enhanced_image, size=target_size, mode="bilinear", align_corners=False
+            )
+
+        result = {
+            "rgb_image": resized_image,
+            "original_size": original_image.shape[-2:],
+            "target_size": target_size,
+            "saturation_enhanced": saturation_enhancement > 0,
+            "color_preserving_resize": use_color_preserving_resize,
+        }
+
+        # Add LAB conversion if requested
+        if enable_lab_conversion:
+            lab_image = self.color_converter.rgb_to_lab(resized_image * 255.0)
+            result["lab_image"] = lab_image
+
+        return result
 
     def _resize_with_aspect(
         self, image: Image.Image, target_size: Tuple[int, int]

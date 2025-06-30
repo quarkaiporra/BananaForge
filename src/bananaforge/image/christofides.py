@@ -5,11 +5,11 @@ import random
 
 import numpy as np
 from joblib import Parallel, delayed
+from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import cdist
 from skimage.color import rgb2lab
-from sklearn.cluster import MiniBatchKMeans, KMeans
+from sklearn.cluster import KMeans, MiniBatchKMeans
 from sklearn.metrics import silhouette_score
-from scipy.optimize import linear_sum_assignment
 
 
 def _compute_distinctiveness(centroids: np.ndarray) -> np.ndarray:
@@ -338,9 +338,9 @@ def create_height_map_from_mapping(all_labels, value_map, max_layers=None):
     eps = 1e-7
     # Ensure values are properly bounded to avoid invalid log operations
     final_height_map = np.clip(final_height_map, eps, 1.0 - eps)
-    final_height_map_logits = np.log(
-        final_height_map / (1 - final_height_map)
-    ).astype(np.float32)
+    final_height_map_logits = np.log(final_height_map / (1 - final_height_map)).astype(
+        np.float32
+    )
 
     # --- Initialize global_logits ---
     # For now, we'll create a simple cycling pattern for material assignments
@@ -349,7 +349,9 @@ def create_height_map_from_mapping(all_labels, value_map, max_layers=None):
     if max_layers is not None:
         global_logits = np.zeros((max_layers, 1), dtype=np.float32)  # Use max_layers
     else:
-        global_logits = np.zeros((len(value_map), 1), dtype=np.float32)  # Use num_clusters
+        global_logits = np.zeros(
+            (len(value_map), 1), dtype=np.float32
+        )  # Use num_clusters
 
     return final_height_map_logits, global_logits
 
@@ -498,16 +500,26 @@ def init_height_map(
 
     # Get the unique clusters (should be 0...cluster_layers-1 ideally)
     unique_clusters = sorted(np.unique(all_labels))
-    
+
     # Create the proper height mapping
     new_values = create_mapping(final_ordering, labs, unique_clusters)
-    
+
     # Create height map from the mapping
-    final_height_map, global_logits = create_height_map_from_mapping(all_labels, new_values, max_layers=max_layers)
+    final_height_map, global_logits = create_height_map_from_mapping(
+        all_labels, new_values, max_layers=max_layers
+    )
 
     ordering_metric = compute_ordering_metric(final_ordering, labs)
 
-    return final_height_map, global_logits, ordering_metric, all_labels, labs, final_ordering, new_values
+    return (
+        final_height_map,
+        global_logits,
+        ordering_metric,
+        all_labels,
+        labs,
+        final_ordering,
+        new_values,
+    )
 
 
 def run_init_threads(
@@ -583,36 +595,37 @@ def run_init_threads(
         # Assign materials based on cluster colors
         num_layers = max_layers
         num_materials = len(material_colors)
-        
+
         # Convert material colors to Lab space for better color matching
         from skimage.color import rgb2lab
+
         material_colors_lab = rgb2lab(material_colors.reshape(1, -1, 3)).reshape(-1, 3)
-        
+
         # Create material assignment logits based on cluster-to-material matching
         global_logits_list = []
-        
+
         # Get unique cluster labels
         unique_clusters = np.unique(labels)
-        
+
         # Use the already computed height mapping from init_height_map
-        
+
         for cluster_label in unique_clusters:
             # Get the Lab color for this cluster (already computed in two_stage_weighted_kmeans)
             cluster_lab = labs[cluster_label]
-            
+
             # Find closest material in Lab space
             distances = np.linalg.norm(material_colors_lab - cluster_lab, axis=1)
             best_material_idx = np.argmin(distances)
-            
+
             # Create one-hot assignment for this cluster
             material_logit = np.ones(num_materials, dtype=np.float32) * -1.0
             material_logit[best_material_idx] = 1.0
-            
+
             # Use the MAPPED height value - this handles pruned clusters correctly
             height_value = new_values[cluster_label]
-            
+
             global_logits_list.append((height_value, material_logit))
-        
+
         # Sort by height value and interpolate to max_layers
         global_logits_list.sort(key=lambda x: x[0])
         global_logits = interpolate_arrays(global_logits_list, num_layers)
@@ -622,12 +635,14 @@ def run_init_threads(
         num_layers = max_layers
         # Default to 4 materials if none specified
         num_materials = 4
-        material_assignment_logits = np.zeros((num_layers, num_materials), dtype=np.float32)
-        
+        material_assignment_logits = np.zeros(
+            (num_layers, num_materials), dtype=np.float32
+        )
+
         for i in range(num_layers):
             material_idx = i % num_materials
             material_assignment_logits[i, material_idx] = 1.0
-        
+
         global_logits = material_assignment_logits
 
-    return height_map, global_logits, labels 
+    return height_map, global_logits, labels

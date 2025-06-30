@@ -1,11 +1,12 @@
 """Core optimization engine for multi-layer 3D printing."""
 
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from typing import Dict, List, Optional, Tuple
-import numpy as np
-from dataclasses import dataclass
 
 from .gumbel import GumbelSoftmax, TemperatureScheduler
 from .loss import CombinedLoss
@@ -76,17 +77,21 @@ class LayerOptimizer(nn.Module):
             init_layers, init_materials = initial_global_logits.shape
             if init_layers != config.max_layers or init_materials != num_materials:
                 # Resize the global logits to match expected dimensions
-                resized_global_logits = torch.zeros(config.max_layers, num_materials, device=self.device)
-                
+                resized_global_logits = torch.zeros(
+                    config.max_layers, num_materials, device=self.device
+                )
+
                 # Copy available data
                 copy_layers = min(init_layers, config.max_layers)
                 copy_materials = min(init_materials, num_materials)
-                resized_global_logits[:copy_layers, :copy_materials] = initial_global_logits[:copy_layers, :copy_materials]
-                
+                resized_global_logits[:copy_layers, :copy_materials] = (
+                    initial_global_logits[:copy_layers, :copy_materials]
+                )
+
                 # Initialize remaining layers with cycling pattern
                 for i in range(copy_layers, config.max_layers):
                     resized_global_logits[i, i % num_materials] = 1.0
-                
+
                 self.global_logits = nn.Parameter(resized_global_logits.to(self.device))
             else:
                 self.global_logits = nn.Parameter(initial_global_logits.to(self.device))

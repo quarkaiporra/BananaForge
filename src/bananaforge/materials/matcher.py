@@ -1,12 +1,13 @@
 """Advanced color matching algorithms for material selection."""
 
+from typing import Dict, List, Optional, Tuple
+
+import cv2
+import numpy as np
 import torch
 import torch.nn as nn
-import numpy as np
-from typing import List, Tuple, Optional, Dict
-from sklearn.cluster import KMeans
 from scipy.optimize import linear_sum_assignment
-import cv2
+from sklearn.cluster import KMeans
 
 from .database import Material, MaterialDatabase
 

@@ -1,31 +1,32 @@
 """Command-line interface for BananaForge."""
 
-import click
-import torch
-import logging
-from pathlib import Path
-from typing import Optional, List
 import json
+import logging
+import os
 import sys
+from pathlib import Path
+from typing import List, Optional
+
+import click
 import cv2
 import numpy as np
-import os
-
-from .core.optimizer import LayerOptimizer, OptimizationConfig
-from .image.processor import ImageProcessor
-from .image.heightmap import HeightMapGenerator
-from .materials.database import MaterialDatabase, DefaultMaterials
-from .materials.matcher import ColorMatcher
-from .output.exporter import ModelExporter
-from .utils.config import Config, ConfigManager
-from .utils.logging import setup_logging
-from .utils.color import hex_to_rgb
 import rich.console
 import rich.traceback
+import torch
 from rich.console import Console
 from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
+
+from .core.optimizer import LayerOptimizer, OptimizationConfig
+from .image.heightmap import HeightMapGenerator
+from .image.processor import ImageProcessor
+from .materials.database import DefaultMaterials, MaterialDatabase
+from .materials.matcher import ColorMatcher
+from .output.exporter import ModelExporter
+from .utils.color import hex_to_rgb
+from .utils.config import Config, ConfigManager
+from .utils.logging import setup_logging
 
 # Rich console setup
 console = Console()
@@ -81,8 +82,15 @@ def cli(ctx, verbose: bool, quiet: bool, config):
 )
 @click.option("--max-layers", type=int, default=15, help="Maximum number of layers")
 @click.option("--layer-height", type=float, default=0.08, help="Layer height in mm")
-@click.option("--initial-layer-height", type=float, default=0.16, help="Initial layer height in mm")
-@click.option("--nozzle-diameter", type=float, default=0.4, help="Nozzle diameter in mm")
+@click.option(
+    "--initial-layer-height",
+    type=float,
+    default=0.16,
+    help="Initial layer height in mm",
+)
+@click.option(
+    "--nozzle-diameter", type=float, default=0.4, help="Nozzle diameter in mm"
+)
 @click.option(
     "--physical-size",
     type=float,
@@ -117,8 +125,18 @@ def cli(ctx, verbose: bool, quiet: bool, config):
     "--resolution", type=int, default=512, help="Processing resolution (pixels)"
 )
 @click.option("--preview", is_flag=True, help="Generate preview visualization")
-@click.option("--num-init-rounds", type=int, default=8, help="Number of rounds for heightmap initialization")
-@click.option("--num-init-cluster-layers", type=int, default=-1, help="Number of layers to cluster the image into")
+@click.option(
+    "--num-init-rounds",
+    type=int,
+    default=8,
+    help="Number of rounds for heightmap initialization",
+)
+@click.option(
+    "--num-init-cluster-layers",
+    type=int,
+    default=-1,
+    help="Number of layers to cluster the image into",
+)
 @click.pass_context
 def convert(
     ctx,
@@ -170,7 +188,7 @@ def convert(
 
         # Calculate resolution based on physical size and nozzle diameter
         target_stl_resolution = int(round(physical_size * 2 / nozzle_diameter))
-        
+
         # Apply processing reduction factor to avoid memory issues
         # Use larger reduction factor for very high resolutions
         if target_stl_resolution > 2000:
@@ -179,11 +197,13 @@ def convert(
             processing_reduction_factor = 3  # Third resolution for large targets
         else:
             processing_reduction_factor = 2  # Half resolution for normal targets
-            
+
         computed_processing_size = target_stl_resolution // processing_reduction_factor
-        
+
         click.echo(f"Target STL resolution: {target_stl_resolution} pixels")
-        click.echo(f"Processing resolution: {computed_processing_size} pixels (reduced by factor of {processing_reduction_factor})")
+        click.echo(
+            f"Processing resolution: {computed_processing_size} pixels (reduced by factor of {processing_reduction_factor})"
+        )
 
         # Use image resizing that maintains aspect ratio
         # First load the image to get its dimensions
@@ -213,23 +233,27 @@ def convert(
         processing_h = int(round(orig_h * processing_scale))
 
         click.echo(f"Original image: {orig_w}x{orig_h}")
-        click.echo(f"Target resolution: {target_w}x{target_h} (for heightmap initialization)")
-        click.echo(f"Processing resolution: {processing_w}x{processing_h} (for optimization)")
+        click.echo(
+            f"Target resolution: {target_w}x{target_h} (for heightmap initialization)"
+        )
+        click.echo(
+            f"Processing resolution: {processing_w}x{processing_h} (for optimization)"
+        )
 
         # Load image at TARGET resolution for heightmap initialization
         target_image = image_processor.load_image(
             input_image,
-            target_size=(target_h, target_w), 
+            target_size=(target_h, target_w),
             maintain_aspect=False,  # Already calculated exact size
         )
 
         # Load image at PROCESSING resolution for optimization
         processing_image = image_processor.load_image(
             input_image,
-            target_size=(processing_h, processing_w), 
+            target_size=(processing_h, processing_w),
             maintain_aspect=False,  # Already calculated exact size
         )
-        
+
         # Debug: Print tensor dimensions to verify they match expected dimensions
         click.echo(f"Target image tensor shape: {target_image.shape}")
         click.echo(f"Processing image tensor shape: {processing_image.shape}")
@@ -252,11 +276,21 @@ def convert(
             max_layers=max_layers,
             layer_height=layer_height,
             num_init_rounds=num_init_rounds,
-            num_init_cluster_layers=num_init_cluster_layers if num_init_cluster_layers != -1 else max_layers,
-            random_seed=ctx.obj['config'].get('random_seed', 0) if isinstance(ctx.obj['config'], dict) else getattr(ctx.obj['config'], 'random_seed', 0),
-            background_color=ctx.obj['config'].get('background_color', '#000000') if isinstance(ctx.obj['config'], dict) else getattr(ctx.obj['config'], 'background_color', '#000000')
+            num_init_cluster_layers=(
+                num_init_cluster_layers if num_init_cluster_layers != -1 else max_layers
+            ),
+            random_seed=(
+                ctx.obj["config"].get("random_seed", 0)
+                if isinstance(ctx.obj["config"], dict)
+                else getattr(ctx.obj["config"], "random_seed", 0)
+            ),
+            background_color=(
+                ctx.obj["config"].get("background_color", "#000000")
+                if isinstance(ctx.obj["config"], dict)
+                else getattr(ctx.obj["config"], "background_color", "#000000")
+            ),
         )
-        
+
         heightmap_generator = HeightMapGenerator(cfg, device)
 
         # Convert TARGET image tensor to numpy array for heightmap generation
@@ -268,8 +302,10 @@ def convert(
 
         # Generate heightmap at FULL TARGET resolution
         click.echo("Generating heightmap at target resolution...")
-        target_height_logits_np, target_global_logits_np, target_labels_np = heightmap_generator.generate(
-            target_image_np, background_tuple, material_colors_np
+        target_height_logits_np, target_global_logits_np, target_labels_np = (
+            heightmap_generator.generate(
+                target_image_np, background_tuple, material_colors_np
+            )
         )
 
         # Convert to tensors with correct dtype
@@ -334,32 +370,46 @@ def convert(
             )
 
         # Get optimized results at processing resolution
-        final_image, final_height_map_processing, final_material_assignments_processing = (
-            optimizer.get_final_results(selected_colors)
-        )
+        (
+            final_image,
+            final_height_map_processing,
+            final_material_assignments_processing,
+        ) = optimizer.get_final_results(selected_colors)
 
         # RESTORE FULL RESOLUTION for STL generation
         click.echo("Restoring full resolution for STL generation...")
-        
-        # Use original full-resolution heightmap with optimized global_logits       
+
+        # Use original full-resolution heightmap with optimized global_logits
         # Apply discretize solution formula directly
         # pixel_heights = (max_layers * h) * torch.sigmoid(pixel_height_logits)
         # discrete_height_image = torch.round(pixel_heights / h).clamp(0, max_layers)
-        pixel_heights = (max_layers * layer_height) * torch.sigmoid(target_height_logits)
+        pixel_heights = (max_layers * layer_height) * torch.sigmoid(
+            target_height_logits
+        )
         discrete_height_image = torch.round(pixel_heights / layer_height)
-        final_height_map_full = torch.clamp(discrete_height_image, 0, max_layers).unsqueeze(0).unsqueeze(0)
-        
+        final_height_map_full = (
+            torch.clamp(discrete_height_image, 0, max_layers).unsqueeze(0).unsqueeze(0)
+        )
+
         # Apply the optimized global material assignments at full resolution
         # For now, we'll upscale the material assignments using nearest neighbor
         # Convert to float for interpolation, then back to original dtype
-        final_material_assignments_full = torch.nn.functional.interpolate(
-            final_material_assignments_processing.float().unsqueeze(0),  # Add batch dim and convert to float
-            size=(target_h, target_w),
-            mode='nearest'
-        ).squeeze(0).to(final_material_assignments_processing.dtype)  # Remove batch dim and restore dtype
+        final_material_assignments_full = (
+            torch.nn.functional.interpolate(
+                final_material_assignments_processing.float().unsqueeze(
+                    0
+                ),  # Add batch dim and convert to float
+                size=(target_h, target_w),
+                mode="nearest",
+            )
+            .squeeze(0)
+            .to(final_material_assignments_processing.dtype)
+        )  # Remove batch dim and restore dtype
 
         click.echo(f"Final heightmap resolution: {final_height_map_full.shape}")
-        click.echo(f"Final material assignments resolution: {final_material_assignments_full.shape}")
+        click.echo(
+            f"Final material assignments resolution: {final_material_assignments_full.shape}"
+        )
 
         # Create output directory
         output_path = Path(output)
@@ -387,7 +437,9 @@ def convert(
             click.echo(f"STL model saved to {generated_files['stl']}")
 
         if "instructions_txt" in generated_files:
-            click.echo(f"Print instructions saved to {generated_files['instructions_txt']}")
+            click.echo(
+                f"Print instructions saved to {generated_files['instructions_txt']}"
+            )
 
         if "cost_report" in generated_files:
             with open(generated_files["cost_report"]) as f:
@@ -446,13 +498,15 @@ def export_materials(format, output, brand, max_materials, color_diversity):
     """Export materials from the database to a file."""
     try:
         from .materials.manager import MaterialManager
-        
+
         logger = logging.getLogger(__name__)
 
         manager = MaterialManager()
-        manager.load_default_materials() # Default for now
-        
-        logger.info(f"Exporting materials with filters: brands={brands}, max_materials={max_materials}")
+        manager.load_default_materials()  # Default for now
+
+        logger.info(
+            f"Exporting materials with filters: brands={brands}, max_materials={max_materials}"
+        )
 
         manager.export_materials(
             output_path=output,
@@ -484,6 +538,7 @@ def analyze_colors(input_image, materials, max_materials, method, output):
     """Analyze the color palette of an image and match it to materials."""
     try:
         from .materials.manager import MaterialManager
+
         logger = logging.getLogger(__name__)
 
         # Initialize components
@@ -510,9 +565,11 @@ def analyze_colors(input_image, materials, max_materials, method, output):
         click.echo(f"  Accuracy Score: {analysis['accuracy_score']:.2f}")
         click.echo(f"  Combined Score: {analysis['combined_score']:.2f}")
         click.echo(f"  Selected Materials ({analysis['num_materials']}):")
-        for mat_id in analysis['material_ids']:
+        for mat_id in analysis["material_ids"]:
             mat_info = manager.get_material_info(mat_id)
-            click.echo(f"    - {mat_info.name} ({mat_info.brand}) - {mat_info.color_hex}")
+            click.echo(
+                f"    - {mat_info.name} ({mat_info.brand}) - {mat_info.color_hex}"
+            )
 
         if output:
             with open(output, "w") as f:

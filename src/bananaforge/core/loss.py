@@ -1,9 +1,10 @@
 """Loss functions for multi-layer 3D printing optimization."""
 
+from typing import Optional, Tuple
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from typing import Optional, Tuple
 import torchvision.models as models
 import torchvision.transforms as transforms
 

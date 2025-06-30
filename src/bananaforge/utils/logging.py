@@ -4,6 +4,7 @@ import logging
 import sys
 from pathlib import Path
 from typing import Optional
+
 import colorlog
 
 
@@ -264,6 +265,7 @@ def log_system_info() -> None:
     logger = get_logger("bananaforge.system")
 
     import platform
+
     import torch
 
     logger.info("System Information:")

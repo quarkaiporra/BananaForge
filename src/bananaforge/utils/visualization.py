@@ -1,13 +1,14 @@
 """Visualization utilities for BananaForge."""
 
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.colors import ListedColormap
-import numpy as np
-import torch
-from typing import List, Optional, Tuple, Dict
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import matplotlib.patches as patches
+import matplotlib.pyplot as plt
+import numpy as np
 import seaborn as sns
+import torch
+from matplotlib.colors import ListedColormap
 
 
 class Visualizer:

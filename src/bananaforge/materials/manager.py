@@ -1,10 +1,11 @@
 """Material manager for coordinating material operations."""
 
-from typing import List, Optional, Dict, Tuple
-import torch
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
-from .database import MaterialDatabase, Material, DefaultMaterials
+import torch
+
+from .database import DefaultMaterials, Material, MaterialDatabase
 from .matcher import ColorMatcher
 
 

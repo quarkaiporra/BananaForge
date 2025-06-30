@@ -1,12 +1,13 @@
 """Height map generation algorithms for BananaForge."""
 
-import torch
-import numpy as np
 from typing import Tuple
 
-from .christofides import run_init_threads
-from ..utils.config import Config
+import numpy as np
+import torch
+
 from ..materials.manager import MaterialManager
+from ..utils.config import Config
+from .christofides import run_init_threads
 
 
 class HeightMapGenerator:

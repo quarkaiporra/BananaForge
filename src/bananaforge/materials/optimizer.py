@@ -1,12 +1,13 @@
 """Material selection optimization algorithms."""
 
-import torch
-import numpy as np
-from typing import List, Tuple, Dict, Optional
-from sklearn.cluster import KMeans
-from scipy.optimize import linear_sum_assignment
+from typing import Dict, List, Optional, Tuple
 
-from .database import MaterialDatabase, Material
+import numpy as np
+import torch
+from scipy.optimize import linear_sum_assignment
+from sklearn.cluster import KMeans
+
+from .database import Material, MaterialDatabase
 
 
 class MaterialOptimizer:

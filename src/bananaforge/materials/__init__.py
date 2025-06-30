@@ -1,7 +1,7 @@
 """Material management and color matching system."""
 
+from .database import Material, MaterialDatabase
 from .manager import MaterialManager
-from .database import MaterialDatabase, Material
 from .matcher import ColorMatcher
 from .optimizer import MaterialOptimizer
 
