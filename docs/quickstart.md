@@ -1,12 +1,13 @@
 # Quick Start Guide
 
-Get up and running with BananaForge in 5 minutes! This guide will walk you through your first image-to-3D conversion.
+Get up and running with BananaForge in 5 minutes! This guide covers basic conversion and the new transparency mixing features.
 
 ## Prerequisites
 
 - BananaForge installed ([Installation Guide](installation.md))
 - An image file (JPG, PNG, etc.)
 - Basic familiarity with command line
+- Optional: CUDA-capable GPU for faster processing
 
 ## Your First Conversion
 
@@ -26,10 +27,17 @@ Choose an image with good contrast and clear colors. For best results:
 bananaforge convert my_image.jpg
 ```
 
+**New in v1.0**: This now uses enhanced optimization with:
+- LAB color space for better color matching
+- Two-stage K-means clustering for height maps
+- Discrete validation tracking
+- Learning rate scheduling
+
 This creates an `output/` folder with:
-- `bananaforge_model.stl` - 3D model file
+- `bananaforge_model.stl` - 3D model file (now with alpha channel support)
 - `bananaforge_model_instructions.txt` - Printing instructions
 - `bananaforge_model_cost_report.txt` - Cost analysis
+- `bananaforge_model_transparency_analysis.txt` - Transparency features report
 
 ### Step 3: View Your Results
 
@@ -46,21 +54,55 @@ ls output/
 
 Load the STL file in your favorite 3D slicer to preview the model!
 
-## Customizing Your Conversion
+## Advanced Features
+
+### Transparency Mixing (New!)
+
+Reduce material swaps by 30% using transparency-based color mixing:
+
+```bash
+# Enable transparency features
+bananaforge convert my_image.jpg --enable-transparency
+
+# With custom opacity levels
+bananaforge convert my_image.jpg \
+  --enable-transparency \
+  --opacity-levels 0.25,0.5,0.75,1.0
+
+# Optimize base layers for maximum contrast
+bananaforge convert my_image.jpg \
+  --enable-transparency \
+  --optimize-base-layers
+```
 
 ### Using Specific Materials
 
 ```bash
 # Export default material database first
-bananaforge export-materials --output bambu_materials.csv
+bananaforge export-materials --output materials.csv
 
 # Convert with specific materials
-bananaforge convert my_image.jpg --materials bambu_materials.csv
+bananaforge convert my_image.jpg --materials materials.csv
+
+# With transparency mixing
+bananaforge convert my_image.jpg \
+  --materials materials.csv \
+  --enable-transparency
 ```
 
-### Adjusting Quality vs Speed
+### GPU Acceleration and Performance
 
 ```bash
+# Use CUDA for faster processing
+bananaforge convert my_image.jpg --device cuda
+
+# Apple Silicon MPS support
+bananaforge convert my_image.jpg --device mps
+
+# Mixed precision for memory efficiency
+bananaforge convert my_image.jpg --device cuda --mixed-precision
+
+# Quality vs Speed options
 # Fast conversion (lower quality)
 bananaforge convert my_image.jpg --iterations 500 --resolution 128
 
@@ -105,17 +147,29 @@ Estimated time: 3m 45s
 ```
 
 ### Cost Report
-Material usage and cost breakdown:
+Material usage and cost breakdown with transparency savings:
 
 ```
 MATERIAL USAGE:
-Material: Basic PLA Black
-  Weight: 12.50g
-  Cost: $0.37
-  Layers: 25
+Material: Basic PLA Black (Base Layer)
+  Weight: 8.20g
+  Cost: $0.25
+  Layers: 15
+  Transparency: 100% (Opaque)
 
-TOTAL MATERIAL COST: $1.25
-TOTAL WEIGHT: 45.20g
+Material: Basic PLA Red (Overlay)
+  Weight: 4.30g  
+  Cost: $0.13
+  Layers: 10
+  Transparency: 67% (Partial)
+
+TRANSPARENCY SAVINGS:
+  Material Swaps Reduced: 35% (12 → 8 swaps)
+  Material Savings: $0.87 (was $2.25)
+  Time Savings: 8 minutes
+
+TOTAL MATERIAL COST: $0.38
+TOTAL WEIGHT: 12.50g
 ```
 
 ## Analyzing Before Converting
@@ -135,42 +189,54 @@ bananaforge analyze-colors my_image.jpg --max-materials 8
 
 ## Common Workflows
 
-### Workflow 1: Quick Test Print
+### Workflow 1: Quick Test Print with Transparency
 
 ```bash
-# Fast, small test print
+# Fast, small test print with transparency features
 bananaforge convert image.jpg \
   --iterations 200 \
   --resolution 64 \
   --max-materials 4 \
   --physical-size 50 \
+  --enable-transparency \
   --project-name "test_print"
 ```
 
-### Workflow 2: Production Quality
+### Workflow 2: Production Quality with Full Transparency
 
 ```bash
-# High quality for final prints
+# High quality for final prints with all transparency features
 bananaforge convert image.jpg \
   --iterations 2000 \
   --resolution 512 \
   --max-materials 8 \
   --physical-size 200 \
   --layer-height 0.15 \
-  --export-format stl instructions hueforge cost_report
+  --enable-transparency \
+  --optimize-base-layers \
+  --enable-gradients \
+  --device cuda \
+  --mixed-precision \
+  --export-format stl instructions hueforge cost_report transparency_analysis
 ```
 
-### Workflow 3: Specific Printer Setup
+### Workflow 3: Transparency Optimization Focus
 
 ```bash
-# For Bambu Lab printer
+# Maximize material savings with transparency
+bananaforge convert image.jpg \
+  --materials materials.csv \
+  --enable-transparency \
+  --transparency-threshold 0.35 \
+  --optimize-base-layers \
+  --enable-gradients \
+  --export-format stl instructions transparency_analysis cost_report
+
+# For specific printer with transparency
 bananaforge convert image.jpg \
   --materials bambu_materials.csv \
-  --export-format stl instructions bambu cost_report
-
-# For Prusa printer  
-bananaforge convert image.jpg \
-  --export-format stl instructions prusa cost_report
+  --enable-transparency \
+  --export-format stl instructions hueforge transparency_analysis
 ```
 
 ## Configuration Profiles

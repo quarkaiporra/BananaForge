@@ -1,16 +1,17 @@
 # Material Management
 
-Learn how to manage materials, create custom databases, and optimize color matching in BananaForge.
+Learn how to manage materials, create custom databases, and optimize color matching in BananaForge with advanced transparency mixing.
 
 ## Overview
 
 Materials are the foundation of multi-color 3D printing. BananaForge provides powerful tools to:
 
 - **Import** material databases from CSV/JSON files
-- **Match** image colors to available materials
-- **Analyze** color harmony and compatibility
-- **Export** material sets for different use cases
-- **Customize** material properties and metadata
+- **Match** image colors to available materials using LAB color space
+- **Analyze** color harmony and transparency compatibility
+- **Export** material sets optimized for transparency mixing
+- **Customize** material properties with transparency support
+- **🌈 NEW: Transparency Mixing** - Create more colors with fewer materials (30%+ swap reduction)
 
 ## Material Database Structure
 
@@ -194,25 +195,31 @@ glow_green,Glow in Dark Green,SUNLU,#32CD32,0.0,200,"Phosphorescent material"
 
 ## Color Matching Methods
 
-BananaForge offers three color matching algorithms:
+BananaForge offers advanced color matching algorithms with transparency support:
 
-### Perceptual Matching (Recommended)
+### LAB Color Space Matching (Default & Recommended)
 
-Uses LAB color space for human vision accuracy:
+Uses perceptually uniform LAB color space for optimal accuracy:
 
 ```bash
-bananaforge analyze-colors image.jpg --method perceptual
+bananaforge analyze-colors image.jpg --method lab
 ```
 
+**🌈 Enhanced in v1.0:**
+- **Transparency-aware matching** - considers achievable colors through mixing
+- **Base layer optimization** - prioritizes dark colors for better contrast
+- **Gradient detection** - identifies areas suitable for transparency effects
+
 **Best for:**
+- All image types (now default method)
 - Portrait and skin tones
 - Natural images
-- When visual accuracy matters most
+- Transparency mixing optimization
 
 **Characteristics:**
-- Considers human color perception
-- Better skin tone matching
-- Slightly slower computation
+- Perceptually uniform color calculations
+- Better skin tone and gradient matching
+- Optimized for transparency features
 
 ### Euclidean Matching
 
@@ -252,19 +259,29 @@ bananaforge analyze-colors image.jpg --method lab
 
 ## Material Selection Strategies
 
-### Color Diversity Optimization
+### Color Diversity Optimization with Transparency
 
-When exporting materials, optimize for color coverage:
+Optimize material selection for maximum color coverage through transparency mixing:
 
 ```bash
-# Select 8 most diverse colors from available materials
+# Select 8 materials optimized for transparency mixing
+bananaforge export-materials \
+  --max-materials 8 \
+  --transparency-optimized \
+  --output transparency_set.csv
+
+# Traditional color diversity (still available)
 bananaforge export-materials \
   --max-materials 8 \
   --color-diversity \
   --output diverse_set.csv
 ```
 
-This uses k-means++ style selection to maximize color space coverage.
+**🌈 New Transparency Optimization:**
+- Selects base colors that maximize achievable color palette
+- Prioritizes dark base colors for better contrast
+- Considers three-layer opacity model (33%, 67%, 100%)
+- Can achieve 3x more colors than traditional selection
 
 ### Brand-Specific Sets
 
@@ -309,24 +326,28 @@ stone_gray,Stone Gray,Custom,#696969,"Rock and concrete"
 
 ### Transparency and Transmission
 
-For translucent materials:
+BananaForge now uses transparency for **advanced color mixing** beyond just translucent materials:
 
 ```csv
-id,name,brand,color_hex,transparency,transmission_distance
-clear_pla,Clear PLA,Generic,#FFFFFF,0.9,12.0
-frosted_white,Frosted White,Generic,#F8F8FF,0.6,8.0
-tinted_blue,Tinted Blue,Generic,#E6F3FF,0.7,10.0
+id,name,brand,color_hex,transparency,transmission_distance,mixing_capability
+clear_pla,Clear PLA,Generic,#FFFFFF,0.9,12.0,excellent
+frosted_white,Frosted White,Generic,#F8F8FF,0.6,8.0,good
+tinted_blue,Tinted Blue,Generic,#E6F3FF,0.7,10.0,good
+opaque_black,Opaque Black PLA,Generic,#000000,0.0,0.0,base_layer
+opaque_red,Opaque Red PLA,Generic,#FF0000,0.0,0.0,overlay
 ```
 
 **Transparency Values:**
-- `0.0` = Completely opaque
-- `0.5` = Semi-transparent
+- `0.0` = Completely opaque (ideal for base layers)
+- `0.33` = Light transparency (three-layer model)
+- `0.67` = Medium transparency (three-layer model)
 - `1.0` = Completely clear
 
-**Transmission Distance:**
-- Distance light travels through material (mm)
-- Higher values = more transparent
-- Affects layer calculation for lithophanes
+**Mixing Capability:**
+- `base_layer` = Optimal for dark base colors (maximizes contrast)
+- `overlay` = Good for transparency overlay effects
+- `excellent` = Perfect for transparency mixing
+- `good` = Suitable for transparency effects
 
 ### Cost Analysis
 
@@ -366,27 +387,44 @@ Organize materials with tags:
 
 ## Color Analysis Tools
 
-### Pre-Conversion Analysis
+### Pre-Conversion Analysis with Transparency
 
-Analyze image colors before converting:
+Analyze image colors and transparency potential before converting:
 
 ```bash
-# Basic analysis
-bananaforge analyze-colors portrait.jpg --max-materials 6
+# Basic analysis with transparency features
+bananaforge analyze-colors portrait.jpg \
+  --max-materials 6 \
+  --enable-transparency
 
-# Detailed analysis with output
+# Detailed transparency analysis
 bananaforge analyze-colors portrait.jpg \
   --materials my_materials.csv \
-  --method perceptual \
+  --enable-transparency \
+  --transparency-threshold 0.35 \
+  --output transparency_analysis.json
+
+# Traditional analysis (still available)
+bananaforge analyze-colors portrait.jpg \
+  --materials my_materials.csv \
+  --method lab \
   --output analysis.json
 ```
 
-### Color Harmony Analysis
+### Transparency and Color Analysis
 
-The analysis includes color harmony metrics:
+The analysis now includes transparency mixing potential:
 
 ```json
 {
+  "transparency_analysis": {
+    "achievable_colors": 24,
+    "base_materials": 6,
+    "color_expansion_factor": 4.0,
+    "estimated_swap_reduction": 0.35,
+    "gradient_regions": 3,
+    "transparency_suitability": "excellent"
+  },
   "harmony_metrics": {
     "hue_variance": 0.234,
     "saturation_variance": 0.156,
@@ -412,11 +450,18 @@ bananaforge analyze-colors image.jpg --materials materials.csv
 
 ```
 Color analysis for image.jpg
-Method: perceptual
+Method: lab (transparency-aware)
 Suggested materials (6):
-  1. Basic PLA White - #FFFFFF (RGB: 1.00, 1.00, 1.00) [Match: 95%]
-  2. Basic PLA Red - #DC143C (RGB: 0.86, 0.08, 0.24) [Match: 87%] 
-  3. Basic PLA Blue - #4169E1 (RGB: 0.25, 0.41, 0.88) [Match: 82%]
+  1. Basic PLA Black - #000000 (Base Layer) [Contrast: 98%]
+  2. Basic PLA White - #FFFFFF (RGB: 1.00, 1.00, 1.00) [Match: 95%]
+  3. Basic PLA Red - #DC143C (RGB: 0.86, 0.08, 0.24) [Match: 87%] 
+  4. Basic PLA Blue - #4169E1 (RGB: 0.25, 0.41, 0.88) [Match: 82%]
+
+Transparency Analysis:
+  Achievable colors through mixing: 18 (3x base materials)
+  Estimated material swap reduction: 32%
+  Gradient regions suitable for transparency: 2
+  Base layer optimization: Excellent (dark base available)
 ```
 
 ## Workflow Examples

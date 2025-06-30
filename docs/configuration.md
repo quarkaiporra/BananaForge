@@ -1,6 +1,6 @@
 # Configuration Guide
 
-Learn how to configure BananaForge for your specific needs and workflows.
+Learn how to configure BananaForge for your specific needs and workflows, including the new transparency mixing features.
 
 ## Configuration Methods
 
@@ -9,7 +9,8 @@ BananaForge supports multiple ways to configure settings:
 1. **Configuration Files** - JSON/YAML files with persistent settings
 2. **Command Line Arguments** - Override settings per command  
 3. **Environment Variables** - System-level defaults
-4. **Configuration Profiles** - Predefined setting combinations
+4. **Configuration Profiles** - Predefined setting combinations including transparency
+5. **🌈 Transparency Profiles** - Optimized settings for transparency mixing
 
 ## Configuration Files
 
@@ -18,6 +19,9 @@ BananaForge supports multiple ways to configure settings:
 ```bash
 # Create default configuration
 bananaforge init-config --output my_config.json
+
+# Create transparency-optimized configuration
+bananaforge init-config --transparency-optimized --output transparency_config.json
 
 # Edit the file with your preferred settings
 # Then use it:
@@ -31,11 +35,11 @@ bananaforge convert image.jpg --config my_config.json
   "optimization": {
     "iterations": 1000,
     "learning_rate": 0.01,
-    "initial_temperature": 1.0,
-    "final_temperature": 0.1,
-    "temperature_decay": "linear",
+    "learning_rate_scheduler": "cosine",
+    "mixed_precision": true,
+    "discrete_validation_interval": 50,
     "early_stopping_patience": 100,
-    "device": "cpu"
+    "device": "cuda"
   },
   "model": {
     "layer_height": 0.2,
@@ -46,13 +50,22 @@ bananaforge convert image.jpg --config my_config.json
   },
   "materials": {
     "max_materials": 8,
-    "color_matching_method": "perceptual",
+    "color_matching_method": "lab",
     "default_database": "bambu_pla"
   },
+  "transparency": {
+    "enabled": true,
+    "opacity_levels": [0.33, 0.67, 1.0],
+    "base_layer_optimization": true,
+    "gradient_processing": true,
+    "min_savings_threshold": 0.3,
+    "quality_preservation_weight": 0.7
+  },
   "export": {
-    "default_formats": ["stl", "instructions", "cost_report"],
+    "default_formats": ["stl", "instructions", "cost_report", "transparency_analysis"],
     "project_name": "bananaforge_model",
-    "generate_preview": false
+    "generate_preview": false,
+    "include_transparency_metadata": true
   },
   "loss_weights": {
     "perceptual": 1.0,
@@ -83,6 +96,8 @@ You can also use YAML format:
 optimization:
   iterations: 1500
   learning_rate: 0.015
+  learning_rate_scheduler: cosine
+  mixed_precision: true
   device: cuda
 
 model:
@@ -93,13 +108,21 @@ model:
 
 materials:
   max_materials: 6
-  color_matching_method: perceptual
+  color_matching_method: lab
+
+transparency:
+  enabled: true
+  opacity_levels: [0.33, 0.67, 1.0]
+  base_layer_optimization: true
+  gradient_processing: true
+  min_savings_threshold: 0.35
 
 export:
   default_formats:
     - stl
     - instructions  
-    - bambu
+    - hueforge
+    - transparency_analysis
     - cost_report
   generate_preview: true
 ```
@@ -108,26 +131,60 @@ export:
 
 ### Optimization Settings
 
-Controls the AI optimization process:
+Controls the enhanced AI optimization process:
 
 ```json
 {
   "optimization": {
-    "iterations": 1000,          // Number of optimization steps
-    "learning_rate": 0.01,       // How fast the AI learns (0.005-0.02)
-    "initial_temperature": 1.0,   // Starting temperature for Gumbel softmax
-    "final_temperature": 0.1,     // Final temperature (lower = more discrete)
-    "temperature_decay": "linear", // How temperature changes ("linear", "exponential", "cosine")
-    "early_stopping_patience": 100, // Stop if no improvement for N steps
-    "device": "cpu"              // "cpu", "cuda", or "mps"
+    "iterations": 1000,                    // Number of optimization steps
+    "learning_rate": 0.01,                 // How fast the AI learns (0.005-0.02)
+    "learning_rate_scheduler": "cosine",    // "linear", "exponential", "cosine", "plateau"
+    "mixed_precision": true,               // Use FP16 for memory efficiency (CUDA only)
+    "discrete_validation_interval": 50,    // Validate discrete loss every N steps
+    "early_stopping_patience": 100,        // Stop if no improvement for N steps
+    "early_stopping_metric": "discrete",   // "discrete" or "continuous" loss
+    "device": "cuda"                       // "cpu", "cuda", or "mps"
   }
 }
 ```
 
+**🌈 Enhanced Features (v1.0):**
+- **Learning rate scheduling** = Better convergence and stability
+- **Mixed precision** = 50% faster training with minimal quality loss
+- **Discrete validation** = More meaningful progress tracking
+- **Early stopping on discrete loss** = Stops when actual print quality plateaus
+
 **Tuning Tips:**
 - **Higher iterations** = better quality, slower processing
-- **Lower learning rate** = more stable, slower convergence  
-- **CUDA/MPS device** = much faster on compatible hardware
+- **Cosine scheduler** = smooth learning rate decay
+- **Mixed precision** = enable for CUDA GPUs with Tensor Cores
+
+### 🌈 Transparency Settings (New in v1.0)
+
+Configure transparency-based color mixing:
+
+```json
+{
+  "transparency": {
+    "enabled": true,                          // Enable transparency features
+    "opacity_levels": [0.33, 0.67, 1.0],      // Three-layer opacity model
+    "base_layer_optimization": true,          // Optimize base colors for contrast
+    "gradient_processing": true,              // Enable gradient detection
+    "min_savings_threshold": 0.3,             // Minimum 30% swap reduction required
+    "quality_preservation_weight": 0.7,       // Balance quality vs. cost (0-1)
+    "cost_reduction_weight": 0.3,             // Weight for material savings
+    "max_gradient_layers": 3,                 // Maximum layers for gradients
+    "enable_enhancement": true                // Enable transparency enhancements
+  }
+}
+```
+
+**🌈 Transparency Options:**
+- **Three-layer model**: Creates 33%, 67%, 100% opacity levels
+- **Base layer optimization**: Selects dark colors for maximum contrast
+- **Gradient processing**: Detects and optimizes gradient regions
+- **Savings threshold**: Ensures meaningful material reduction
+- **Quality preservation**: Maintains visual fidelity while reducing costs
 
 ### Model Parameters
 

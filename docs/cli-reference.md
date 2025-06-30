@@ -1,6 +1,6 @@
 # CLI Reference
 
-Complete reference for BananaForge command-line interface.
+Complete reference for BananaForge command-line interface with transparency mixing features.
 
 ## Global Options
 
@@ -14,17 +14,19 @@ bananaforge [GLOBAL_OPTIONS] COMMAND [COMMAND_OPTIONS]
 - `--verbose, -v` - Enable verbose logging
 - `--quiet, -q` - Suppress non-error output  
 - `--config PATH` - Path to configuration file
+- `--device DEVICE` - Processing device: `cuda`, `mps`, or `cpu`
+- `--mixed-precision` - Enable mixed precision for memory efficiency (CUDA only)
 - `--help` - Show help message
 
 ## Commands Overview
 
 | Command | Description |
 |---------|-------------|
-| [`convert`](#convert) | Convert image to 3D model |
-| [`analyze-colors`](#analyze-colors) | Analyze image colors and suggest materials |
-| [`export-materials`](#export-materials) | Export material database to file |
-| [`validate-stl`](#validate-stl) | Validate STL file for 3D printing |
-| [`init-config`](#init-config) | Create configuration file |
+| [`convert`](#convert) | Convert image to 3D model with transparency mixing |
+| [`analyze-colors`](#analyze-colors) | Analyze image colors and transparency potential |
+| [`export-materials`](#export-materials) | Export material database optimized for transparency |
+| [`validate-stl`](#validate-stl) | Validate STL file with alpha channel support |
+| [`init-config`](#init-config) | Create configuration file with transparency settings |
 | [`version`](#version) | Show version information |
 
 ---
@@ -45,9 +47,18 @@ bananaforge convert INPUT_IMAGE [OPTIONS]
 #### Output Control
 - `--output, -o PATH` - Output directory (default: `./output`)
 - `--project-name TEXT` - Name for generated files (default: `bananaforge_model`)
+- `--export-format LIST` - Export formats: `stl`, `instructions`, `hueforge`, `cost_report`, `transparency_analysis`
 
 #### Material Settings
 - `--materials PATH` - Material database file (CSV or JSON)
+- `--max-materials INT` - Maximum number of materials to use (default: 8)
+
+#### 🌈 Transparency Features (New in v1.0)
+- `--enable-transparency` - Enable transparency-based color mixing
+- `--opacity-levels LIST` - Custom opacity levels (default: 0.33,0.67,1.0)
+- `--optimize-base-layers` - Optimize base layer colors for maximum contrast
+- `--enable-gradients` - Enable gradient processing for smooth transitions
+- `--transparency-threshold FLOAT` - Minimum transparency savings threshold (default: 0.3)
 - `--max-materials INT` - Maximum number of materials (default: 8)
 
 #### Model Parameters
@@ -89,6 +100,17 @@ bananaforge convert photo.jpg \
   --project-name "my_lithophane"
 ```
 
+#### 🌈 Full Transparency Optimization
+```bash
+bananaforge convert photo.jpg \
+  --enable-transparency \
+  --optimize-base-layers \
+  --enable-gradients \
+  --device cuda \
+  --mixed-precision \
+  --export-format stl instructions transparency_analysis
+```
+
 #### GPU Accelerated
 ```bash
 bananaforge convert photo.jpg \
@@ -101,7 +123,7 @@ bananaforge convert photo.jpg \
 
 ## analyze-colors
 
-Analyze image colors and suggest materials without full conversion.
+Analyze image colors and transparency mixing potential without full conversion.
 
 ```bash
 bananaforge analyze-colors INPUT_IMAGE [OPTIONS]
@@ -111,10 +133,17 @@ bananaforge analyze-colors INPUT_IMAGE [OPTIONS]
 - `INPUT_IMAGE` - Path to input image file
 
 ### Options
+#### Basic Analysis
 - `--materials PATH` - Material database file
 - `--max-materials INT` - Maximum materials to suggest (default: 8)
-- `--method [perceptual|euclidean|lab]` - Color matching method (default: perceptual)
+- `--method [lab|perceptual|euclidean]` - Color matching method (default: lab)
 - `--output, -o PATH` - Save analysis results to JSON file
+
+#### 🌈 Transparency Analysis (New)
+- `--enable-transparency` - Analyze transparency mixing potential
+- `--transparency-threshold FLOAT` - Minimum transparency savings to report (default: 0.25)
+- `--analyze-gradients` - Detect gradient regions suitable for transparency
+- `--base-layer-analysis` - Analyze base layer optimization potential
 
 ### Examples
 
@@ -123,19 +152,58 @@ bananaforge analyze-colors INPUT_IMAGE [OPTIONS]
 bananaforge analyze-colors photo.jpg --max-materials 6
 ```
 
-#### Advanced Analysis with Custom Materials
+#### 🌈 Transparency Analysis (Recommended)
 ```bash
 bananaforge analyze-colors photo.jpg \
+  --enable-transparency \
+  --materials my_filaments.csv \
+  --max-materials 6 \
+  --output transparency_analysis.json
+```
+
+#### Advanced Analysis with Gradient Detection
+```bash
+bananaforge analyze-colors photo.jpg \
+  --enable-transparency \
+  --analyze-gradients \
+  --base-layer-analysis \
   --materials my_filaments.csv \
   --method lab \
-  --output color_analysis.json
+  --output detailed_analysis.json
 ```
 
 ### Output
+
+#### Standard Analysis
 ```
 Color analysis for photo.jpg
-Method: perceptual
+Method: lab
 Suggested materials (6):
+  1. Basic PLA Black - #000000 (Base Layer) [Contrast: 98%]
+  2. Basic PLA White - #FFFFFF [Match: 95%]
+  3. Basic PLA Red - #DC143C [Match: 87%]
+  ...
+```
+
+#### 🌈 Transparency Analysis Output
+```
+Transparency Analysis for photo.jpg
+Method: lab (transparency-aware)
+
+Base Materials (4):
+  1. Basic PLA Black - #000000 (Optimal base layer)
+  2. Basic PLA White - #FFFFFF [Match: 95%]
+  3. Basic PLA Red - #DC143C [Match: 87%]
+  4. Basic PLA Blue - #4169E1 [Match: 82%]
+
+Transparency Mixing Results:
+  Achievable colors: 12 (3x expansion from 4 materials)
+  Estimated swap reduction: 35%
+  Material cost savings: $1.20 (estimated)
+  Gradient regions detected: 2
+  Base layer optimization: Excellent
+
+Recommendation: Enable transparency mixing for optimal results
   1. Basic PLA White - #FFFFFF (RGB: 1.00, 1.00, 1.00)
   2. Basic PLA Black - #000000 (RGB: 0.00, 0.00, 0.00)
   3. Basic PLA Red - #FF0000 (RGB: 1.00, 0.00, 0.00)
