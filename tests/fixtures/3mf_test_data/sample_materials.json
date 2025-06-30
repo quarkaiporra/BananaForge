@@ -1,0 +1,62 @@
+{
+  "pla_red": {
+    "name": "Bambu PLA Basic Red",
+    "brand": "Bambu Lab",
+    "type": "PLA",
+    "color": "#FF0000",
+    "nozzle_temp": 220,
+    "bed_temp": 60,
+    "print_speed": 50,
+    "density": 1.24,
+    "properties": {
+      "transparency": 1.0,
+      "gloss": 0.8,
+      "flexibility": 0.2
+    }
+  },
+  "pla_white": {
+    "name": "Bambu PLA Basic White",
+    "brand": "Bambu Lab", 
+    "type": "PLA",
+    "color": "#FFFFFF",
+    "nozzle_temp": 215,
+    "bed_temp": 55,
+    "print_speed": 55,
+    "density": 1.24,
+    "properties": {
+      "transparency": 1.0,
+      "gloss": 0.7,
+      "flexibility": 0.2
+    }
+  },
+  "pla_blue": {
+    "name": "Bambu PLA Basic Blue",
+    "brand": "Bambu Lab",
+    "type": "PLA", 
+    "color": "#0000FF",
+    "nozzle_temp": 218,
+    "bed_temp": 58,
+    "print_speed": 52,
+    "density": 1.24,
+    "properties": {
+      "transparency": 1.0,
+      "gloss": 0.8,
+      "flexibility": 0.2
+    }
+  },
+  "pla_black": {
+    "name": "Bambu PLA Basic Black",
+    "brand": "Bambu Lab",
+    "type": "PLA",
+    "color": "#000000", 
+    "nozzle_temp": 225,
+    "bed_temp": 65,
+    "print_speed": 48,
+    "density": 1.24,
+    "properties": {
+      "transparency": 1.0,
+      "gloss": 0.9,
+      "flexibility": 0.2
+    }
+  }
+}

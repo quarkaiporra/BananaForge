@@ -113,7 +113,7 @@ def cli(ctx, verbose: bool, quiet: bool, config):
     "--export-format",
     type=str,
     default="stl,instructions,cost_report",
-    help="Export formats to generate (comma-separated): stl, instructions, hueforge, prusa, bambu, cost_report, transparency_analysis",
+    help="Export formats to generate (comma-separated): stl, 3mf, instructions, hueforge, prusa, bambu, cost_report, transparency_analysis",
 )
 @click.option(
     "--project-name", default="bananaforge_model", help="Name for the generated project"
@@ -166,6 +166,17 @@ def cli(ctx, verbose: bool, quiet: bool, config):
     is_flag=True,
     help="Enable mixed precision for memory efficiency (CUDA only)"
 )
+@click.option(
+    "--bambu-compatible",
+    is_flag=True,
+    help="Generate 3MF files optimized for Bambu Studio compatibility"
+)
+@click.option(
+    "--include-3mf-metadata",
+    is_flag=True,
+    default=True,
+    help="Include detailed metadata in 3MF files (default: enabled)"
+)
 @click.pass_context
 def convert(
     ctx,
@@ -193,6 +204,8 @@ def convert(
     enable_gradients,
     transparency_threshold,
     mixed_precision,
+    bambu_compatible,
+    include_3mf_metadata,
 ):
     """Convert an image to a multi-layer 3D model."""
 
@@ -201,7 +214,7 @@ def convert(
         logger.info(f"Starting conversion of {input_image}")
 
         # Parse and validate export formats
-        valid_export_formats = ["stl", "instructions", "hueforge", "prusa", "bambu", "cost_report", "transparency_analysis"]
+        valid_export_formats = ["stl", "3mf", "instructions", "hueforge", "prusa", "bambu", "cost_report", "transparency_analysis"]
         export_format_list = [fmt.strip() for fmt in export_format.split(',')]
         invalid_formats = [fmt for fmt in export_format_list if fmt not in valid_export_formats]
         
@@ -595,6 +608,8 @@ def convert(
             layer_height=layer_height,
             initial_layer_height=initial_layer_height,
             physical_size=physical_size,
+            material_db=material_db,
+            device=device,
         )
 
         generated_files = exporter.export_complete_model(
@@ -609,6 +624,11 @@ def convert(
 
         if "stl" in generated_files:
             click.echo(f"STL model saved to {generated_files['stl']}")
+
+        if "3mf" in generated_files:
+            click.echo(f"3MF model saved to {generated_files['3mf']}")
+            if bambu_compatible:
+                click.echo("  → Optimized for Bambu Studio compatibility")
 
         if "instructions_txt" in generated_files:
             click.echo(

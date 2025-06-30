@@ -1,0 +1,41 @@
+{
+  "description": "Expected 3MF file structure for testing compliance",
+  "required_files": [
+    "[Content_Types].xml",
+    "_rels/.rels",
+    "3D/3dmodel.model"
+  ],
+  "optional_files": [
+    "Metadata/thumbnail.png",
+    "Metadata/model_info.xml"
+  ],
+  "content_types": {
+    ".rels": "application/vnd.openxmlformats-package.relationships+xml",
+    ".model": "application/vnd.ms-package.3dmanufacturing-3dmodel+xml",
+    ".png": "image/png",
+    ".xml": "application/xml"
+  },
+  "namespaces": {
+    "3mf_core": "http://schemas.microsoft.com/3dmanufacturing/core/2015/02",
+    "3mf_material": "http://schemas.microsoft.com/3dmanufacturing/material/2015/02", 
+    "3mf_slice": "http://schemas.microsoft.com/3dmanufacturing/slice/2015/07",
+    "opc_relationships": "http://schemas.openxmlformats.org/package/2006/relationships",
+    "opc_content_types": "http://schemas.openxmlformats.org/package/2006/content-types"
+  },
+  "validation_rules": {
+    "max_file_size_mb": 100,
+    "required_xml_elements": [
+      "model",
+      "resources", 
+      "build",
+      "object",
+      "mesh"
+    ],
+    "mesh_requirements": {
+      "min_vertices": 3,
+      "min_triangles": 1,
+      "manifold": true,
+      "watertight": true
+    }
+  }
+}
