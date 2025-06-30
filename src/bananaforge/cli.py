@@ -305,7 +305,7 @@ def convert(
 
         # Match materials to image colors (use processing image for efficiency)
         click.echo("Matching materials to image colors...")
-        color_matcher = ColorMatcher(material_db, device)
+        color_matcher = ColorMatcher(material_db, device, enable_transparency=enable_transparency)
         selected_materials, selected_colors, color_mapping = (
             color_matcher.optimize_material_selection(processing_image, max_materials)
         )
@@ -340,8 +340,11 @@ def convert(
             # Setup transparency configuration
             transparency_config = {
                 'opacity_levels': opacity_levels_list,
+                # Support both parameter naming conventions for compatibility
                 'enable_gradient_mixing': enable_gradients,
+                'gradient_mixing': enable_gradients,
                 'enable_base_layer_optimization': optimize_base_layers,
+                'base_optimization': optimize_base_layers,
                 'transparency_threshold': transparency_threshold,
                 'mixed_precision': mixed_precision and device == 'cuda'
             }
@@ -779,7 +782,7 @@ def analyze_colors(input_image, materials, max_materials, method, output, enable
 
         # Initialize components
         image_processor = ImageProcessor()
-        manager = MaterialManager()
+        manager = MaterialManager(enable_transparency=enable_transparency)
 
         # Load materials
         if materials:

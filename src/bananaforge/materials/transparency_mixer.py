@@ -247,6 +247,7 @@ class TransparencyColorMixer:
         filament_colors: List[torch.Tensor],
         max_layers: int = 3,
         optimize_performance: bool = False,
+        grayscale_only: bool = False,
     ) -> List[Dict]:
         """Compute all achievable colors through transparency mixing.
 
@@ -254,6 +255,7 @@ class TransparencyColorMixer:
             filament_colors: List of available filament color tensors
             max_layers: Maximum layers for mixing
             optimize_performance: Whether to optimize for performance
+            grayscale_only: Whether to restrict to grayscale combinations only
 
         Returns:
             List of dictionaries containing color combinations and metadata
@@ -262,6 +264,10 @@ class TransparencyColorMixer:
 
         # Ensure all filament colors are on the correct device
         filament_colors = [color.to(self.device) for color in filament_colors]
+
+        # Filter to grayscale colors if requested
+        if grayscale_only:
+            filament_colors = self._filter_grayscale_colors(filament_colors)
 
         # Add base colors (single layer)
         for i, base_color in enumerate(filament_colors):
@@ -545,4 +551,105 @@ class TransparencyColorMixer:
             "opacity_level": match_info["opacity"],
             "layer_count": match_info["layers"],
             "mixing_instructions": f"Apply {match_info['layers']} layers of overlay material at {match_info['opacity']:.1%} opacity",
+        }
+
+    def is_grayscale_image(self, image: torch.Tensor, threshold: float = 0.05) -> bool:
+        """Check if image is effectively grayscale.
+
+        Args:
+            image: Input image (1, 3, H, W) or (3, H, W)
+            threshold: Color variation threshold for grayscale detection
+
+        Returns:
+            True if image is grayscale, False otherwise
+        """
+        # Handle different input shapes
+        if image.dim() == 4:
+            image = image.squeeze(0)
+        elif image.dim() != 3 or image.shape[0] != 3:
+            raise ValueError("Image must be (1, 3, H, W) or (3, H, W)")
+
+        # Extract RGB channels
+        r, g, b = image[0], image[1], image[2]
+
+        # Calculate differences between channels
+        rg_diff = torch.abs(r - g).mean().item()
+        rb_diff = torch.abs(r - b).mean().item()
+        gb_diff = torch.abs(g - b).mean().item()
+
+        # Check if all channel differences are below threshold
+        max_diff = max(rg_diff, rb_diff, gb_diff)
+        return max_diff < threshold
+
+    def _filter_grayscale_colors(self, colors: List[torch.Tensor], threshold: float = 0.1) -> List[torch.Tensor]:
+        """Filter color list to include only grayscale colors.
+
+        Args:
+            colors: List of color tensors (3,)
+            threshold: Threshold for grayscale detection
+
+        Returns:
+            List of grayscale color tensors
+        """
+        grayscale_colors = []
+        
+        for color in colors:
+            # Check if color is grayscale (R≈G≈B)
+            r, g, b = color[0].item(), color[1].item(), color[2].item()
+            color_diff = max(abs(r-g), abs(r-b), abs(g-b))
+            
+            # Consider it grayscale if color channels are very similar
+            if color_diff < threshold:
+                grayscale_colors.append(color)
+
+        return grayscale_colors
+
+    def compute_grayscale_mixing_options(
+        self, 
+        grayscale_colors: List[torch.Tensor], 
+        max_layers: int = 3
+    ) -> Dict:
+        """Compute grayscale-specific mixing options.
+
+        Args:
+            grayscale_colors: List of grayscale color tensors
+            max_layers: Maximum layers for mixing
+
+        Returns:
+            Dictionary with grayscale mixing analysis
+        """
+        # Sort grayscale colors by luminance
+        sorted_colors = sorted(
+            grayscale_colors, 
+            key=lambda c: (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]).item()
+        )
+
+        mixing_options = []
+        
+        # Generate all possible grayscale combinations
+        for i, dark_color in enumerate(sorted_colors):
+            for j, light_color in enumerate(sorted_colors[i+1:], i+1):
+                for opacity in self.opacity_levels:
+                    mixed_color = dark_color * (1 - opacity) + light_color * opacity
+                    mixed_color = torch.clamp(mixed_color, 0.0, 1.0)
+                    
+                    mixing_options.append({
+                        "dark_base_index": i,
+                        "light_overlay_index": j,
+                        "mixed_color": mixed_color,
+                        "opacity": opacity,
+                        "luminance": (0.299 * mixed_color[0] + 0.587 * mixed_color[1] + 0.114 * mixed_color[2]).item()
+                    })
+
+        # Sort by luminance for smooth gradients
+        mixing_options.sort(key=lambda x: x["luminance"])
+
+        return {
+            "sorted_base_colors": sorted_colors,
+            "mixing_options": mixing_options,
+            "total_grayscale_combinations": len(mixing_options),
+            "luminance_range": {
+                "min": mixing_options[0]["luminance"] if mixing_options else 0.0,
+                "max": mixing_options[-1]["luminance"] if mixing_options else 1.0
+            }
         }
