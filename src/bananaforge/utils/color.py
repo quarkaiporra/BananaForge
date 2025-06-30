@@ -284,6 +284,82 @@ class ColorConverter:
         return weights
 
 
+# Global color converter instance for simple function access
+_global_color_converter = None
+
+
+def get_color_converter(device: str = "cpu") -> ColorConverter:
+    """Get global color converter instance."""
+    global _global_color_converter
+    if _global_color_converter is None:
+        _global_color_converter = ColorConverter(device)
+    return _global_color_converter
+
+
+def rgb_to_lab(rgb: torch.Tensor) -> torch.Tensor:
+    """Convert RGB tensor to LAB color space.
+    
+    Args:
+        rgb: RGB tensor with values in [0, 1] or [0, 255]
+        
+    Returns:
+        LAB tensor with L* in [0, 100], a* and b* in [-128, 127]
+    """
+    converter = get_color_converter(device=str(rgb.device))
+    
+    # Handle different input formats
+    if rgb.max() <= 1.0:
+        # Input is in [0, 1], scale to [0, 255]
+        rgb_scaled = rgb * 255.0
+    else:
+        rgb_scaled = rgb
+    
+    # Ensure correct tensor shape for converter
+    if rgb.dim() == 1:
+        # Single color vector (3,) -> (1, 3, 1, 1)
+        rgb_scaled = rgb_scaled.unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
+        result = converter.rgb_to_lab(rgb_scaled)
+        return result.squeeze(0).squeeze(-1).squeeze(-1)
+    elif rgb.dim() == 2:
+        # Multiple colors (N, 3) -> (1, 3, N, 1)
+        rgb_scaled = rgb_scaled.t().unsqueeze(0).unsqueeze(-1)
+        result = converter.rgb_to_lab(rgb_scaled)
+        return result.squeeze(0).squeeze(-1).t()
+    else:
+        # Image tensor, use directly
+        return converter.rgb_to_lab(rgb_scaled)
+
+
+def lab_to_rgb(lab: torch.Tensor) -> torch.Tensor:
+    """Convert LAB tensor to RGB color space.
+    
+    Args:
+        lab: LAB tensor with L* in [0, 100], a* and b* in [-128, 127]
+        
+    Returns:
+        RGB tensor with values in [0, 1]
+    """
+    converter = get_color_converter(device=str(lab.device))
+    
+    # Handle different input formats
+    if lab.dim() == 1:
+        # Single color vector (3,) -> (1, 3, 1, 1)
+        lab_expanded = lab.unsqueeze(0).unsqueeze(-1).unsqueeze(-1)
+        result = converter.lab_to_rgb(lab_expanded)
+        rgb_result = result.squeeze(0).squeeze(-1).squeeze(-1)
+    elif lab.dim() == 2:
+        # Multiple colors (N, 3) -> (1, 3, N, 1)
+        lab_expanded = lab.t().unsqueeze(0).unsqueeze(-1)
+        result = converter.lab_to_rgb(lab_expanded)
+        rgb_result = result.squeeze(0).squeeze(-1).t()
+    else:
+        # Image tensor, use directly
+        rgb_result = converter.lab_to_rgb(lab)
+    
+    # Convert from [0, 255] to [0, 1]
+    return rgb_result / 255.0
+
+
 class ColorMatcher:
     """Advanced color matching using perceptual color spaces."""
 
