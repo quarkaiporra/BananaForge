@@ -572,6 +572,63 @@ class ColorMatcher:
 
         return color_mapping
 
+    def _transparency_aware_matching(
+        self, image: torch.Tensor, dominant_colors: torch.Tensor, max_materials: int
+    ) -> Tuple[List[str], torch.Tensor, torch.Tensor]:
+        """Color matching that considers achievable colors through transparency mixing.
+        
+        This method finds the optimal set of base materials that can create the target
+        colors through transparency mixing (e.g., red + white = pink).
+        """
+        # Get all achievable colors through transparency mixing
+        filament_colors = [self.material_colors[i] for i in range(len(self.material_colors))]
+        achievable_combinations = self.transparency_mixer.compute_achievable_colors(
+            filament_colors, max_layers=3
+        )
+        
+        # Convert to tensors for efficient processing
+        achievable_colors = torch.stack([combo["color"] for combo in achievable_combinations]).to(self.device)
+        
+        # Convert dominant colors and achievable colors to LAB space for perceptual matching
+        dominant_lab = self._rgb_to_lab(dominant_colors)
+        achievable_lab = self._rgb_to_lab(achievable_colors)
+        
+        # Find best matches for each dominant color
+        best_combinations = []
+        selected_material_indices = set()
+        
+        for dominant_color_lab in dominant_lab:
+            # Calculate perceptual distances to all achievable colors
+            distances = torch.norm(achievable_lab - dominant_color_lab.unsqueeze(0), dim=1)
+            
+            # Find best matches that don't exceed our material budget
+            sorted_indices = torch.argsort(distances)
+            
+            for idx in sorted_indices:
+                combo = achievable_combinations[idx.item()]
+                base_idx = combo["base_material"]
+                overlay_idx = combo["overlay_material"]
+                
+                # Check if adding this combination would exceed material budget
+                required_materials = {base_idx, overlay_idx}
+                if len(selected_material_indices | required_materials) <= max_materials:
+                    best_combinations.append(combo)
+                    selected_material_indices.update(required_materials)
+                    break
+            
+            if len(best_combinations) >= max_materials:
+                break
+        
+        # Extract unique materials needed
+        final_material_indices = list(selected_material_indices)[:max_materials]
+        final_material_ids = [self.material_ids[i] for i in final_material_indices]
+        final_colors = torch.stack([self.material_colors[i] for i in final_material_indices])
+        
+        # Create color mapping using the final selected materials
+        color_mapping = self._create_color_mapping(image, final_colors)
+        
+        return final_material_ids, final_colors, color_mapping
+
 
 class AdaptiveMatcher:
     """Adaptive color matching that learns from user preferences."""
@@ -665,60 +722,3 @@ class AdaptiveMatcher:
         scored_materials.sort(key=lambda x: x[1], reverse=True)
 
         return [material_id for material_id, _ in scored_materials]
-
-    def _transparency_aware_matching(
-        self, image: torch.Tensor, dominant_colors: torch.Tensor, max_materials: int
-    ) -> Tuple[List[str], torch.Tensor, torch.Tensor]:
-        """Color matching that considers achievable colors through transparency mixing.
-        
-        This method finds the optimal set of base materials that can create the target
-        colors through transparency mixing (e.g., red + white = pink).
-        """
-        # Get all achievable colors through transparency mixing
-        filament_colors = [self.material_colors[i] for i in range(len(self.material_colors))]
-        achievable_combinations = self.transparency_mixer.compute_achievable_colors(
-            filament_colors, max_layers=3
-        )
-        
-        # Convert to tensors for efficient processing
-        achievable_colors = torch.stack([combo["color"] for combo in achievable_combinations]).to(self.device)
-        
-        # Convert dominant colors and achievable colors to LAB space for perceptual matching
-        dominant_lab = self._rgb_to_lab(dominant_colors)
-        achievable_lab = self._rgb_to_lab(achievable_colors)
-        
-        # Find best matches for each dominant color
-        best_combinations = []
-        selected_material_indices = set()
-        
-        for dominant_color_lab in dominant_lab:
-            # Calculate perceptual distances to all achievable colors
-            distances = torch.norm(achievable_lab - dominant_color_lab.unsqueeze(0), dim=1)
-            
-            # Find best matches that don't exceed our material budget
-            sorted_indices = torch.argsort(distances)
-            
-            for idx in sorted_indices:
-                combo = achievable_combinations[idx.item()]
-                base_idx = combo["base_material"]
-                overlay_idx = combo["overlay_material"]
-                
-                # Check if adding this combination would exceed material budget
-                required_materials = {base_idx, overlay_idx}
-                if len(selected_material_indices | required_materials) <= max_materials:
-                    best_combinations.append(combo)
-                    selected_material_indices.update(required_materials)
-                    break
-            
-            if len(best_combinations) >= max_materials:
-                break
-        
-        # Extract unique materials needed
-        final_material_indices = list(selected_material_indices)[:max_materials]
-        final_material_ids = [self.material_ids[i] for i in final_material_indices]
-        final_colors = torch.stack([self.material_colors[i] for i in final_material_indices])
-        
-        # Create color mapping using the final selected materials
-        color_mapping = self._create_color_mapping(image, final_colors)
-        
-        return final_material_ids, final_colors, color_mapping
