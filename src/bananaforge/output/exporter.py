@@ -65,7 +65,7 @@ class ModelExporter:
         material_database: MaterialDatabase,
         material_ids: List[str],
         output_dir: Union[str, Path],
-        project_name: str = "forgebambu_model",
+        project_name: str = "bananaforge_model",
         export_formats: Optional[List[str]] = None,
         bambu_compatible: bool = False,
         source_image_path: Optional[str] = None,
