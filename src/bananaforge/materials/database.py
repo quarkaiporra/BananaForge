@@ -385,6 +385,14 @@ class MaterialDatabase:
         self._color_cache = None
         self._id_cache = None
 
+    def get_all_materials(self) -> List[Material]:
+        """Get all materials in the database.
+        
+        Returns:
+            List of all materials
+        """
+        return list(self.materials.values())
+
     def __len__(self) -> int:
         """Get number of materials."""
         return len(self.materials)

@@ -78,9 +78,15 @@ bananaforge convert INPUT_IMAGE [OPTIONS]
 - `--mixed-precision` - Enable mixed precision for memory efficiency (CUDA only)
 
 #### Export Options
-- `--export-format LIST` - Export formats (comma-separated): `stl,instructions,hueforge,prusa,bambu,cost_report,transparency_analysis` (default: `stl,instructions,cost_report`)
+- `--export-format LIST` - Export formats (comma-separated): `stl,instructions,hueforge,prusa,bambu,3mf,cost_report,transparency_analysis` (default: `stl,instructions,cost_report`)
 - `--project-name TEXT` - Name for the generated project (default: `bananaforge_model`)
 - `--preview` - Generate preview visualization
+
+#### 3MF Export Options (New in v1.0)
+- `--bambu-compatible` - Enable Bambu Studio optimizations for 3MF export
+- `--include-3mf-metadata` - Include detailed metadata in 3MF files (default: true)
+- `--3mf-validate` - Validate 3MF file structure after export (default: true)
+- `--3mf-compress` - Compress XML content in 3MF files (default: true)
 
 ### Examples
 
@@ -115,6 +121,22 @@ bananaforge convert photo.jpg \
   --device cuda \
   --mixed-precision \
   --export-format stl,instructions,transparency_analysis
+```
+
+#### 🌈 Complete Professional 3MF Workflow
+```bash
+# Professional workflow with all advanced features and 3MF export
+bananaforge convert ./chihiro-4color.png \
+  --output ./outputs/chihiro \
+  --enable-transparency \
+  --mixed-precision \
+  --max-materials 4 \
+  --materials ./materials.csv \
+  --optimize-base-layers \
+  --enable-gradients \
+  --export-format 3mf,stl,instructions \
+  --bambu-compatible \
+  --include-3mf-metadata
 ```
 
 #### GPU Accelerated
@@ -368,7 +390,7 @@ bananaforge version
 
 ### Output
 ```
-BananaForge 0.1.0
+BananaForge 1.0.0
 ```
 
 ---
@@ -574,9 +596,9 @@ bananaforge convert image.jpg --resolution 512
 
 For more help:
 
-- **Documentation**: [docs/](https://github.com/bananaforge/bananaforge/docs)
-- **Issues**: [GitHub Issues](https://github.com/bananaforge/bananaforge/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/bananaforge/bananaforge/discussions)
+- **Documentation**: [docs/](https://github.com/eddieoz/BananaForge/docs)
+- **Issues**: [GitHub Issues](https://github.com/eddieoz/BananaForge/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/eddieoz/BananaForge/discussions)
 
 Show BananaForge version information.
 
@@ -584,4 +606,4 @@ Show BananaForge version information.
 bananaforge version
 ```
 
-BananaForge 0.1.0
+BananaForge 1.0.0

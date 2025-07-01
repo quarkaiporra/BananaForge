@@ -28,7 +28,7 @@ pip install bananaforge
 
 ```bash
 bananaforge --version
-# Should show: BananaForge Version: 0.1.0
+# Should show: BananaForge Version: 1.0.0
 ```
 
 ### 3. Test Basic Functionality
@@ -52,11 +52,6 @@ bananaforge convert --help
    pip install bananaforge
    ```
 
-3. **Install BananaForge**:
-   ```cmd
-   pip install bananaforge
-   ```
-
 #### Method 2: Using Conda
 
 ```bash
@@ -75,11 +70,6 @@ pip install bananaforge
    ```
 
 2. **Install BananaForge**:
-   ```bash
-   pip install bananaforge
-   ```
-
-3. **Install BananaForge**:
    ```bash
    pip install bananaforge
    ```
@@ -107,11 +97,6 @@ pip install bananaforge
    pip install bananaforge
    ```
 
-3. **Install BananaForge**:
-   ```bash
-   pip install bananaforge
-   ```
-
 #### Method 2: Using Virtual Environment
 
 ```bash
@@ -126,7 +111,7 @@ For developers who want to modify BananaForge:
 
 ```bash
 # Clone the repository
-git clone https://github.com/bananaforge/bananaforge.git
+git clone https://github.com/eddieoz/BananaForge.git
 cd bananaforge
 
 # Create virtual environment
@@ -246,5 +231,5 @@ After installation:
 If you encounter issues:
 
 - Check the **[Troubleshooting Guide](troubleshooting.md)**
-- Search **[GitHub Issues](https://github.com/bananaforge/bananaforge/issues)**
-- Ask in **[GitHub Discussions](https://github.com/bananaforge/bananaforge/discussions)**
+- Search **[GitHub Issues](https://github.com/eddieoz/BananaForge/issues)**
+- Ask in **[GitHub Discussions](https://github.com/eddieoz/BananaForge/discussions)**

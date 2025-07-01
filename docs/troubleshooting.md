@@ -652,8 +652,8 @@ if torch.backends.mps.is_available():
 ### Resources
 
 - 📖 **Documentation**: [Full Documentation](README.md)
-- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/bananaforge/bananaforge/issues)
-- 💬 **Community**: [GitHub Discussions](https://github.com/bananaforge/bananaforge/discussions)
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/eddieoz/BananaForge/issues)
+- 💬 **Community**: [GitHub Discussions](https://github.com/eddieoz/BananaForge/discussions)
 - 📧 **Support**: support@bananaforge.com
 
 ### Performance Monitoring

@@ -64,7 +64,7 @@ bananaforge convert image.jpg \
 
 ### Development Installation (Current)
 ```bash
-git clone https://github.com/username/BananaForge.git
+git clone https://github.com/eddieoz/BananaForge.git
 cd BananaForge
 pip install -e .[dev]
 ```

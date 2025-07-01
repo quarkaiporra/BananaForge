@@ -221,6 +221,11 @@ def convert(
         if invalid_formats:
             raise click.ClickException(f"Invalid export format(s): {', '.join(invalid_formats)}. Valid formats: {', '.join(valid_export_formats)}")
         
+        # Automatically add 3MF export when bambu-compatible is enabled
+        if bambu_compatible and "3mf" not in export_format_list:
+            export_format_list.append("3mf")
+            click.echo("🔧 Bambu compatibility enabled: Added 3MF export format")
+        
         logger.info(f"Export formats: {', '.join(export_format_list)}")
 
         # Initialize components
@@ -620,6 +625,8 @@ def convert(
             output_dir=output_path,
             project_name=project_name,
             export_formats=list(export_format_list),
+            bambu_compatible=bambu_compatible,
+            source_image_path=str(input_image),
         )
 
         if "stl" in generated_files:

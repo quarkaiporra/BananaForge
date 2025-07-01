@@ -484,6 +484,6 @@ print(f"MPS available: {torch.backends.mps.is_available()}")
 
 For API support:
 
-- **Documentation**: [docs/](https://github.com/bananaforge/bananaforge/docs)
-- **Issues**: [GitHub Issues](https://github.com/bananaforge/bananaforge/issues)
-- **Examples**: [examples/](https://github.com/bananaforge/bananaforge/examples)
+- **Documentation**: [docs/](https://github.com/eddieoz/BananaForge/docs)
+- **Issues**: [GitHub Issues](https://github.com/eddieoz/BananaForge/issues)
+- **Examples**: [examples/](https://github.com/eddieoz/BananaForge/examples)

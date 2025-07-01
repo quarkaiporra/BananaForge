@@ -99,5 +99,5 @@ Have a great BananaForge workflow? Share it!
 ## Support
 
 - 📖 **Documentation**: [Main Docs](../README.md)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/bananaforge/bananaforge/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/bananaforge/bananaforge/discussions)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/eddieoz/BananaForge/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/eddieoz/BananaForge/discussions)

@@ -241,6 +241,31 @@ bananaforge convert image.jpg \
   --export-format "stl,instructions,hueforge,transparency_analysis"
 ```
 
+### Workflow 4: Complete Professional 3MF Export
+
+```bash
+# Professional workflow with all advanced features and 3MF export
+bananaforge convert ./chihiro-4color.png \
+  --output ./outputs/chihiro \
+  --enable-transparency \
+  --mixed-precision \
+  --max-materials 4 \
+  --materials ./materials.csv \
+  --optimize-base-layers \
+  --enable-gradients \
+  --export-format 3mf,stl,instructions \
+  --bambu-compatible \
+  --include-3mf-metadata
+```
+
+This comprehensive command demonstrates:
+- **3MF export** with Bambu Studio compatibility
+- **Transparency mixing** for optimal material usage
+- **Mixed precision** for faster processing on CUDA GPUs
+- **Base layer optimization** for maximum contrast
+- **Gradient processing** for smooth color transitions
+- **Complete metadata** embedding in 3MF files
+
 ## Configuration Profiles
 
 Use predefined profiles for common scenarios:
