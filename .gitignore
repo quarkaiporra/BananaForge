@@ -191,6 +191,9 @@ temp_fix.py
 *.max
 *.c4d
 
+# Large template files (prevent accidental commits)
+*/bambu_template/**/Objects/*.model
+
 # Machine learning and model files
 *.pkl
 *.pickle
