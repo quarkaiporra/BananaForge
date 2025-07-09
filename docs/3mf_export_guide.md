@@ -2,7 +2,7 @@
 
 ## Overview
 
-BananaForge now supports exporting optimized 3D models in the 3MF (3D Manufacturing Format) format, providing advanced multi-color printing capabilities with per-layer material assignment and full compatibility with modern slicers like Bambu Studio.
+BananaForge now supports exporting optimized 3D models in the 3MF (3D Manufacturing Format) format, providing advanced multi-color printing capabilities with per-layer material assignment and full compatibility with modern slicers like Bambu Studio (EXPERIMENTAL).
 
 ## What is 3MF?
 
@@ -12,7 +12,7 @@ BananaForge now supports exporting optimized 3D models in the 3MF (3D Manufactur
 - **Multi-material support**: Native support for multiple materials and colors
 - **Layer information**: Can embed layer-specific material assignments
 - **Metadata embedding**: Stores printing parameters, material properties, and manufacturing instructions
-- **Industry standard**: Supported by major slicers (Bambu Studio, PrusaSlicer, etc.)
+- **Industry standard**: Supported by major slicers (Bambu Studio (EXPERIMENTAL), PrusaSlicer, etc.)
 
 ## Key Features
 
@@ -25,7 +25,7 @@ BananaForge's 3MF export provides:
 - **Validation and quality assurance**: Automatic file structure validation
 
 ### ✅ Advanced Features
-- **Bambu Studio compatibility**: Optimized for Bambu Lab printers
+- **Bambu Studio compatibility**: Optimized for Bambu Lab printers (EXPERIMENTAL)
 - **Transparency support**: Alpha channel handling for transparent materials
 - **Mesh optimization**: Efficient vertex and triangle generation from heightmaps
 - **Progress reporting**: Real-time export progress feedback
@@ -47,13 +47,13 @@ bananaforge convert input.jpg --export-format 3mf --output ./output/
 bananaforge convert input.jpg --export-format stl,3mf,instructions --output ./output/
 ```
 
-### Bambu Studio Compatible Export
+### Bambu Studio Compatible Export (EXPERIMENTAL)
 
 ```bash
-# Export with Bambu Studio optimizations
+# Export with Bambu Studio optimizations (EXPERIMENTAL)
 bananaforge convert input.jpg \
   --export-format 3mf \
-  --bambu-compatible \
+  --bambu-compatible \  # EXPERIMENTAL
   --include-3mf-metadata \
   --materials bambu_materials.csv \
   --output ./output/
@@ -68,7 +68,7 @@ bananaforge convert input.jpg \
   --max-layers 50 \
   --layer-height 0.2 \
   --export-format 3mf \
-  --bambu-compatible \
+  --bambu-compatible \  # EXPERIMENTAL
   --include-3mf-metadata \
   --output ./output/
 ```
@@ -78,7 +78,7 @@ bananaforge convert input.jpg \
 | Option | Description | Default |
 |--------|-------------|---------|
 | `--export-format` | Include `3mf` in format list | `stl,instructions` |
-| `--bambu-compatible` | Enable Bambu Studio optimizations | `False` |
+| `--bambu-compatible` | Enable Bambu Studio optimizations (EXPERIMENTAL) | `False` |
 | `--include-3mf-metadata` | Include detailed metadata in 3MF | `True` |
 | `--materials` | Material database CSV/JSON | Built-in materials |
 
@@ -178,7 +178,7 @@ print(f"Materials used: {result['materials_count']}")
 
 ## Slicer Compatibility
 
-### Bambu Studio
+### Bambu Studio (EXPERIMENTAL)
 - ✅ Full material assignment support
 - ✅ Per-layer color changes
 - ✅ Automatic material swap detection

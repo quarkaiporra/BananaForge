@@ -113,7 +113,7 @@ def cli(ctx, verbose: bool, quiet: bool, config):
     "--export-format",
     type=str,
     default="stl,instructions,cost_report",
-    help="Export formats to generate (comma-separated): stl, 3mf, instructions, hueforge, prusa, bambu, cost_report, transparency_analysis",
+    help="Export formats to generate (comma-separated): stl, 3mf, instructions, hueforge, prusa, bambu (EXPERIMENTAL), cost_report, transparency_analysis",
 )
 @click.option(
     "--project-name", default="bananaforge_model", help="Name for the generated project"
@@ -169,7 +169,7 @@ def cli(ctx, verbose: bool, quiet: bool, config):
 @click.option(
     "--bambu-compatible",
     is_flag=True,
-    help="Generate 3MF files optimized for Bambu Studio compatibility"
+    help="Generate 3MF files optimized for Bambu Studio compatibility (EXPERIMENTAL)"
 )
 @click.option(
     "--include-3mf-metadata",
@@ -224,7 +224,7 @@ def convert(
         # Automatically add 3MF export when bambu-compatible is enabled
         if bambu_compatible and "3mf" not in export_format_list:
             export_format_list.append("3mf")
-            click.echo("🔧 Bambu compatibility enabled: Added 3MF export format")
+            click.echo("🔧 Bambu compatibility enabled: Added 3MF export format (EXPERIMENTAL)")
         
         logger.info(f"Export formats: {', '.join(export_format_list)}")
 
@@ -635,7 +635,7 @@ def convert(
         if "3mf" in generated_files:
             click.echo(f"3MF model saved to {generated_files['3mf']}")
             if bambu_compatible:
-                click.echo("  → Optimized for Bambu Studio compatibility")
+                click.echo("  → Optimized for Bambu Studio compatibility (EXPERIMENTAL)")
 
         if "instructions_txt" in generated_files:
             click.echo(
@@ -655,7 +655,7 @@ def convert(
             click.echo(f"3MF file saved to {generated_files['prusa']}")
 
         if "bambu" in generated_files:
-            click.echo(f"3MF file saved to {generated_files['bambu']}")
+            click.echo(f"3MF file saved to {generated_files['bambu']} (EXPERIMENTAL)")
 
         # 🌈 Generate Transparency Analysis Report (New in v1.0)
         if "transparency_analysis" in export_format_list and enable_transparency and transparency_result:

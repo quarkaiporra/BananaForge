@@ -78,12 +78,12 @@ bananaforge convert INPUT_IMAGE [OPTIONS]
 - `--mixed-precision` - Enable mixed precision for memory efficiency (CUDA only)
 
 #### Export Options
-- `--export-format LIST` - Export formats (comma-separated): `stl,instructions,hueforge,prusa,bambu,3mf,cost_report,transparency_analysis` (default: `stl,instructions,cost_report`)
+- `--export-format LIST` - Export formats (comma-separated): `stl,instructions,hueforge,prusa,bambu (EXPERIMENTAL),3mf,cost_report,transparency_analysis` (default: `stl,instructions,cost_report`)
 - `--project-name TEXT` - Name for the generated project (default: `bananaforge_model`)
 - `--preview` - Generate preview visualization
 
 #### 3MF Export Options (New in v1.0)
-- `--bambu-compatible` - Enable Bambu Studio optimizations for 3MF export
+- `--bambu-compatible` - Enable Bambu Studio optimizations for 3MF export (EXPERIMENTAL)
 - `--include-3mf-metadata` - Include detailed metadata in 3MF files (default: true)
 - `--3mf-validate` - Validate 3MF file structure after export (default: true)
 - `--3mf-compress` - Compress XML content in 3MF files (default: true)
@@ -108,7 +108,7 @@ bananaforge convert photo.jpg \
 ```bash
 bananaforge convert photo.jpg \
   --materials bambu_pla.csv \
-  --export-format stl,instructions,bambu \
+  --export-format stl,instructions,bambu \  # bambu format is EXPERIMENTAL
   --project-name "my_lithophane"
 ```
 
@@ -135,7 +135,7 @@ bananaforge convert ./chihiro-4color.png \
   --optimize-base-layers \
   --enable-gradients \
   --export-format 3mf,stl,instructions \
-  --bambu-compatible \
+  --bambu-compatible \  # EXPERIMENTAL
   --include-3mf-metadata
 ```
 

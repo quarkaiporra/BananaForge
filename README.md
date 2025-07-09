@@ -131,3 +131,10 @@ MIT License - see [LICENSE](LICENSE) for details.
 - Built with ❤️ using PyTorch and modern AI techniques
 - Inspired by the 3D printing and computer vision communities
 - Special thanks to HueForge and Autoforge for pioneering multi-color 3D printing workflows
+
+## Buy me a coffee
+Did you like it? [Buy me a coffee](https://www.buymeacoffee.com/eddieoz)
+
+[![Buy me a coffee](https://ipfs.io/ipfs/QmR6W4L3XiozMQc3EjfFeqSkcbu3cWnhZBn38z2W2FuTMZ?filename=buymeacoffee.webp)](https://www.buymeacoffee.com/eddieoz)
+
+Or drop me a tip through Lightning Network: ⚡ [getalby.com/p/eddieoz](https://getalby.com/p/eddieoz)

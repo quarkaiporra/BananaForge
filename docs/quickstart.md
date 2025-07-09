@@ -129,7 +129,7 @@ bananaforge convert my_image.jpg \
 ### STL File
 Your 3D model ready for slicing. Import into:
 - PrusaSlicer
-- Bambu Studio  
+- Bambu Studio (EXPERIMENTAL)
 - Cura
 - Any other slicer
 
@@ -236,7 +236,7 @@ bananaforge convert image.jpg \
 
 # For specific printer with transparency
 bananaforge convert image.jpg \
-  --materials bambu_materials.csv \
+  --materials bambu_materials.csv \  # Bambu materials are EXPERIMENTAL
   --enable-transparency \
   --export-format "stl,instructions,hueforge,transparency_analysis"
 ```
@@ -254,12 +254,12 @@ bananaforge convert ./chihiro-4color.png \
   --optimize-base-layers \
   --enable-gradients \
   --export-format 3mf,stl,instructions \
-  --bambu-compatible \
+  --bambu-compatible \  # EXPERIMENTAL
   --include-3mf-metadata
 ```
 
 This comprehensive command demonstrates:
-- **3MF export** with Bambu Studio compatibility
+- **3MF export** with Bambu Studio compatibility (EXPERIMENTAL)
 - **Transparency mixing** for optimal material usage
 - **Mixed precision** for faster processing on CUDA GPUs
 - **Base layer optimization** for maximum contrast
