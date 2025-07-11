@@ -1628,6 +1628,7 @@ class ThreeMFExporter:
             finally:
                 # Clean up temp file
                 if os.path.exists(tmp_file.name):
+                    tmp_file.close()
                     os.unlink(tmp_file.name)
     
     def _transform_coordinates_for_bambu(self, vertices: List[Tuple[float, float, float]]) -> List[Tuple[float, float, float]]:
